@@ -3,7 +3,6 @@
 
 #include <sys/ioctl.h> //ioctl() call defenitions
 #include <fcntl.h>
-#include <time.h>
 
 int main(int argc, char** argv)
 {

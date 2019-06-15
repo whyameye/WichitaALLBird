@@ -77,14 +77,33 @@ def testStrand():
                     time.sleep(.001)
                 if getInput(0.25):
                     break
+def testStrands():
+    for port in range(9):
+        ser = serial.Serial('/dev/ttyUSB'+port, BAUDRATE)
+        arduinoID = getID(ser)
+        print("Port "+port+" corresponds to Arduino ID "+str(arduinoID))
+        for strand in range(18):
+            print("Flashing Arduino ID "+str(arduinoID)+" strand "+str(strand))
+            for i in range(6):
+                for i in range(6):
+                    setLED(ser, strand, i, 150, 254)
+                    time.sleep(.001)
+                time.sleep(0.25)
+                for i in range(6):
+                    setLED(ser, strand,i, 150, 0)
+                    time.sleep(.001)
+                time.sleep(0.25)
+        ser.close()
+
 
 def getID(ser):
-    msg = ser.read(ser.inWaiting()) # empty buffer (TODO: this is not tested yet)
-    bytes = []
-    bytes.append(0xff)
-    bytes.append(0xff)
-    ser.write(serial.to_bytes(bytes))
-    # time.sleep(.01)
-    time.sleep(1)
-    msg = ser.read(ser.inWaiting())
+    msg = ""
+    while msg == "":
+        print("trying to read ID")
+        bytes = []
+        bytes.append(0xff)
+        bytes.append(0xff)
+        ser.write(serial.to_bytes(bytes))
+        time.sleep(.01)
+        msg = ser.read(ser.inWaiting())
     return msg[0]

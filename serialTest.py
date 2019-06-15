@@ -98,12 +98,16 @@ def testStrands():
 
 def getID(ser):
     msg = ""
-    while msg == "":
-        print("trying to read ID")
-        bytes = []
-        bytes.append(0xff)
-        bytes.append(0xff)
-        ser.write(serial.to_bytes(bytes))
-        time.sleep(.01)
-        msg = ser.read(ser.inWaiting())
+    print("trying to read ID")
+    bytes = []
+    bytes.append(0xff)
+    bytes.append(0xff)
+    ser.write(serial.to_bytes(bytes))
+    time.sleep(.01)
+    msg = ser.read(ser.inWaiting())
+    try:
+        msg[0]
+    except:
+        time.sleep(.5)
+        getID(ser)
     return msg[0]

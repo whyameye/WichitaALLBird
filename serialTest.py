@@ -79,6 +79,7 @@ def testStrand():
                     break
 
 def getID(ser):
+    msg = ser.read(ser.inWaiting()) # empty buffer (TODO: this is not tested yet)
     bytes = []
     bytes.append(0xff)
     bytes.append(0xff)

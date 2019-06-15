@@ -77,8 +77,9 @@ def testStrand():
                     time.sleep(.001)
                 if getInput(0.25):
                     break
-def testStrands(times):
-    for port in range(9):
+def testStrands(port, times):
+    if True:
+    # for port in range(9):
         ser = serial.Serial('/dev/ttyUSB'+str(port), BAUDRATE)
         arduinoID = 9
         while arduinoID > 8:

@@ -110,4 +110,5 @@ def getID(ser):
     except:
         time.sleep(.5)
         getID(ser)
-    return msg[0]
+    else:
+        return msg[0]

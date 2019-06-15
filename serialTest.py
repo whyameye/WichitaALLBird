@@ -81,7 +81,7 @@ def testStrands():
     for port in range(9):
         ser = serial.Serial('/dev/ttyUSB'+str(port), BAUDRATE)
         arduinoID = getID(ser)
-        print("Port "+port+" corresponds to Arduino ID "+str(arduinoID))
+        print("Port "+str(port)+" corresponds to Arduino ID "+str(arduinoID))
         for strand in range(18):
             print("Flashing Arduino ID "+str(arduinoID)+" strand "+str(strand))
             for i in range(6):

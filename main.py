@@ -1,4 +1,5 @@
 import json, time, random
+import serialTest
 
 DEBUG = False
 
@@ -41,7 +42,7 @@ modes = {
              [0,0,0,4000]]}}
 
 def saveBirds(birds):
-    f = open("birds.dat","w")
+    f = open("birds.json","w")
     f.write(json.dumps(birds, indent=4))
     f.close()
     

@@ -1,11 +1,13 @@
 import serial, time, sys, select, serial.tools.list_ports, binascii, os
 from itertools import chain
-BAUDRATE = 9600
+BAUDRATE = 2000000 # 115200
 
 # ser = serial.Serial('/dev/cu.wchusbserial14120', 115200)
 # ser = serial.Serial('/dev/ttyUSB1', 115200)
 
 def resetArduino(port):
+    # must call 2x for some unknown reason
+    os.system("./dtr "+port)
     os.system("./dtr "+port)
     
 def printPorts():
@@ -20,6 +22,17 @@ def choosePort():
     port = input("Port #: ")
     return port
 
+def openPort():
+    port = choosePort();
+    resetArduino("/dev/ttyUSB"+port)
+    ser = serial.Serial('/dev/ttyUSB'+port, BAUDRATE)
+    print("ID : {} ".format(getID(ser)))
+    time.sleep(1)
+    return ser
+
+def closePort(ser):
+    ser.close()
+    
 def getInput(timeToWait):
     i, o, e = select.select( [sys.stdin], [], [], timeToWait )
     if (i):
@@ -36,24 +49,47 @@ def setLED(ser, strand, numOnStrand, color, amplitude):
     ser.write(serial.to_bytes(bytes))
 
 def test1(amp):
-    port = choosePort()
-    ser = serial.Serial('/dev/ttyUSB'+port, BAUDRATE)
-    for color in range(254):
-        for strand in range(18):
+    """cycle all colors with constant amplitude
+    Parameter:
+    __________
+    amplitude : range (0 - 254)
+                ranges above 127 add white LED
+    """
+    ser = openPort()
+    test1do(ser, amp)
+    
+def test1do(ser, amp):
+    for color in range(0,255,1):
+        print("\r>> Color (0-254): {}  ".format(color), end='')
+        for strand in range(0,18):
             for num in range(5):
                 setLED(ser, strand, num, color, amp)
-                time.sleep(.001)
-
+                time.sleep(.0006)
+        # time.sleep(.5)
+    test1do(ser, amp)
+    
 def test2(color):
-    port = choosePort();
-    ser = serial.Serial('/dev/ttyUSB'+port, BAUDRATE)
-    for amp in chain(range(0,128,1),range(128,0,-1)):
+    """cycle one color from amplitude 0 - 127 and back
+    Parameter:
+    ----------
+    color : range 0 - 254
+    """
+    ser = openPort();
+    test2do(ser,color)
+    
+def test2do(ser,color):
+    for amp in chain(range(10,128,1),range(127,9,-1)):
+        print("\r>> Amplitude (0-127): {}  ".format(amp), end='')
         for strand in range(18):
             for num in range(5):
                 setLED(ser, strand, num, color, amp)
-                time.sleep(.001)
+                time.sleep(.0006)
+    test2do(ser,color)
 
 def testStrand():
+    """flash prompted strand white
+    """
+
     while True:
         port = choosePort();
         # ser = serial.Serial('/dev/ttyUSB'+port, 115200)
@@ -78,23 +114,30 @@ def testStrand():
                 if getInput(0.25):
                     break
 def testStrands(port, times):
+    """flash all strands (0-17) white
+    Parameters
+    ----------
+    port  : number corresponding to which /dev/ttyUSB port is being used
+    times : number of times to flash strang
+    """
     if True:
     # for port in range(9):
         ser = serial.Serial('/dev/ttyUSB'+str(port), BAUDRATE)
-        arduinoID = 9
-        while arduinoID > 8:
+        arduinoID = 13
+        while arduinoID > 12:
             arduinoID = getID(ser)
         print("Port "+str(port)+" corresponds to Arduino ID "+str(arduinoID))
+        # time.sleep(10);
         for strand in range(18):
             print("Flashing Arduino ID "+str(arduinoID)+" strand "+str(strand))
-            for i in range(times):
+            for j in range(times):
                 for i in range(6):
                     setLED(ser, strand, i, 150, 254)
                     time.sleep(.001)
                 time.sleep(0.25)
                 for i in range(6):
                     setLED(ser, strand,i, 150, 0)
-                    time.sleep(.001)
+                    time.sleep(.01)
                 time.sleep(0.25)
         ser.close()
 
@@ -113,4 +156,9 @@ def getID(ser):
     except:
         ans = 9
         time.sleep(.5)
+    '''
+    bytes = []
+    bytes.append(0xff)
+    ser.write(serial.to_bytes(bytes))
+    '''
     return ans

@@ -46,8 +46,8 @@ def saveBirds(birds):
     f.write(json.dumps(birds, indent=4))
     f.close()
     
-def loadBirds():
-    f = open("birds.dat","r")
+def loadBirds(filename):
+    f = open(filename,"r")
     birds = json.loads(f.read())
     f.close()
     return birds
@@ -148,6 +148,7 @@ def generateSequences(mode, newTrig):
 
 def updateMode():
     pass
+
 # Main program logic:
 if __name__ == '__main__':
 

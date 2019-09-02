@@ -1,0 +1,2 @@
+#!/bin/bash
+ssh pi@$1 "sudo chown pi:pi /etc/wpa_supplicant/wpa_supplicant.conf && sudo chmod 777 /etc/wpa_supplicant/wpa_supplicant.conf && sudo echo -e 'network={\n   ssid=\"ALL-Training\"\n   psk=\"1ct316\$TrAiN!ng\"\n}' >> /etc/wpa_supplicant/wpa_supplicant.conf && sudo chmod 644 /etc/wpa_supplicant/wpa_supplicant.conf && sudo chown root:root /etc/wpa_supplicant/wpa_supplicant.conf && cat /etc/wpa_supplicant/wpa_supplicant.conf"

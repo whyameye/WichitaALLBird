@@ -48,5 +48,17 @@
 - **tests.py**: tests focused on higher-level logic of bird paths etc.
 - **WichitaALLStrands.json**: JSON file with most current data of strands.
 
+## TODO
+- add necessary parameters for mode 0
+- convert mode 0 to be a json file and code reads the file
+- have mode 0 actually work
+    - don't worry about switching modes yet
+    
+### Mode changes
+- replace startLed with random generation based on constraints in moves
 
+# Current Status
+- just wrote getStartLed. Not tested
+- by writing getStartLed we defined what the datatype of an LED is: an array of 2 elements
+- need to review list vs. array vs. tuple vs. object
 

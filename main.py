@@ -1,56 +1,18 @@
 import json, time, random
 import serialTest
 
-DEBUG = False
-
-# TODO: this redef of seq ledSequence is odd
-ledSequence = seq = [4,5,8,9]
-
-# ledLength = len(loadBirds)
-
-ledLength = len(ledSequence)
-
-modes = {
-    0:{
-        'minInstances':2,
-        'maxInstances':3,
-        'minLength':16,
-        'maxLength':32,
-        'timeToNextLed':100, # ms
-        'startLed':range(ledLength),
-        'ledPattern':
-            [[0,0,0,0], # R,G,B,time
-             [0,6,0, 2000],
-             [12,12,0, 3000],
-             [12,12,0, 4000],
-             [12,12,12, 5000],
-             [0,0,0,10000]]},
-    1:{
-        'minInstances':5,
-        'maxInstances':5,
-        'minLength':32,
-        'maxLength':64,
-        'timeToNextLed':100, # ms
-        'startLed':range(ledLength),
-        'ledPattern':
-            [[0,0,0,0], # R,G,B,time
-             # [255,140,0, 1000],
-             [128,0,0, 1400],
-             [255,0,0, 1600],
-             [178,34,34,2000],
-             [255,69,0, 3000],
-             [0,0,0,4000]]}}
+DEBUG = True
 
 def saveBirds(birds):
     f = open("birds.json","w")
     f.write(json.dumps(birds, indent=4))
     f.close()
     
-def loadBirds(filename):
+def loadJSON(filename):
     f = open(filename,"r")
-    birds = json.loads(f.read())
+    jsonResult = json.loads(f.read())
     f.close()
-    return birds
+    return jsonResult
 
 def debug(str):
     if DEBUG:
@@ -80,7 +42,7 @@ class Seq(object):
             (self.currentLed < self.totalLeds)):
             debug("adding LED:")
             if self.currentLed == 0:
-                ledIndex = random.randrange(len(self.mode['startLed']))
+                ledIndex = self.getStartLed()
                 debug("adding first led: "+str(ledIndex))
             else:
                 # FIXME: how to choose ledIndex
@@ -98,7 +60,17 @@ class Seq(object):
             debug("activeLEDs: "+str(self.activeLeds));
             self.leds.append([ledIndex, millis()])
             self.currentLed += 1
-        return True
+        return False
+
+    def getStartLed():
+        startRings = self.modemode["moves"]["startRings"]
+        startGroups = self.modemode["moves"]["startGroups"]
+        while True:
+            testStrand = random.randrange(0,len(strands)+1)
+            if (set(startRings) & set(strands[str(testStrand)]["ring"]) &&
+                set(startGroups) & set(strands[str(testStrand)]["group"])):
+                break;
+        return [testStrand, random.randrange(0,len(strands[str(testStrand)]["y"])+1)]
 
     def updateLed(self,led):
         deltaTime = millis() - led[1]
@@ -124,7 +96,7 @@ class Seq(object):
     # returns False if all Leds have gone through all states
     def update(self):
         if not self.addLed(self.leds):
-            return False
+            return False # FIXME: false returned only when stunted, I think? Why kill everything in that case?
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
                 # debug("updateLed: "+str(self.leds[i]))
@@ -143,7 +115,7 @@ def generateSequences(mode, newTrig):
     numOfSeqs = random.randrange(mode['minInstances'],mode['maxInstances']+1)
     while (len(allTheSeqs) < numOfSeqs) or (newTrig == True):
         newTrig = False
-        debug("generating seq #"+str(len(allTheSeqs)+1))
+        debug("generating parameters for seq #"+str(len(allTheSeqs)+1))
         allTheSeqs.append(Seq(mode))
 
 def updateMode():
@@ -156,25 +128,29 @@ if __name__ == '__main__':
     mode = 0
     allTheSeqs = []
     newTrig = False
-    generateSequences(modes[mode], newTrig)
+    modes = loadJSON("WichitaALLModes.json")
+    strands = loadJSON("WichitaALLStrands.json")
+
+    generateSequences(modes[str(mode)], newTrig)
     trigTime = 0
     
     # loop
     while True:
+        break;
         # TODO the entire below block is for new modes placeholder for now
         if False: # this is where a new mode would be triggered
             print("NEW MODE")
-            newTrig = True
+            newTrig = True # force new sequence to start
             mode = 0 # should be new mode
             trigTime = millis()
         updateMode()
-        for sequence in allTheSeqs:
-            if not sequence.update():
+        for sequence in allTheSeqs: # allTheSeqs is a list of classes we will now traverse
+            if not sequence.update(): # if sequence should die
                 debug("removing sequence")
-                sequence.remove()
-                allTheSeqs.remove(sequence)
-                del sequence
-                mode = ((millis() - trigTime) < TRIGGER_LENGTH)
+                sequence.remove() # LWT for the sequence. Probably unnecessary
+                allTheSeqs.remove(sequence) # remove from the list
+                del sequence # delete class in environment
+                # mode = ((millis() - trigTime) < TRIGGER_LENGTH) TODO
                 generateSequences(modes[mode], newTrig)
         # strip.show()
 

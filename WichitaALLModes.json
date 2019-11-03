@@ -1,42 +1,44 @@
 {
-    "0":{
-        "minInstances":2,
-        "maxInstances":3,
-        "minLength":16,
-        "maxLength":32,
-        "moves":{
-            "startDirection": ["left"],
-            "startRings": [1,2],
-            "startGroups": [1,2,3],
-            "changeMove": 0.1,
-            "movesAllowed": ["left", "up", "down","inner", "outer"],
-            "moveOutsideGroup": 0.5},
-        "timeToNextLed":100,
-        "ledPattern":
-            [[0,0,0],
-             [0,127, 2000],
-             [12,254, 3000],
-             [12,12, 4000],
-             [126,64, 5000],
-             [0,0,10000]]},
-    "1":{
-        "minInstances":5,
-        "maxInstances":5,
-        "minLength":32,
-        "maxLength":64,
-        "timeToNextLed":100,
-        "moves":{
-            "startDirection": ["right","up"],
-            "startRings": [2],
-            "startCircles": [2],
-            "changeMove": 0.9,
-            "movesAllowed": ["left", "right", "up", "down"],
-            "moveOutsideCircle": 0.5},
-        "ledPattern":
-            [[0,0,0],
-             [128,128, 1400],
-             [254,254, 1600],
-             [178,34,2000],
-             [254,78, 3000],
-             [0,0,4000]]}
+  "0":{
+    "minInstances":2,
+    "maxInstances":3,
+    "minLength":16,
+    "maxLength":32,
+    "moves":{
+      "startDirection": ["left"],
+      "startRings": [1,2],
+      "startGroups": [1,2,3],
+      "changeMove": 0.1,
+      "movesAllowed": ["left", "up", "down","inner", "outer"],
+      "moveOutsideGroup": 0.5,
+      "moveOutsideRing": 0.2
+    },
+    "timeToNextLed":100,
+    "ledPattern":
+    [[0,0,0],
+     [0,127, 2000],
+     [12,254, 3000],
+     [12,12, 4000],
+     [126,64, 5000],
+     [0,0,10000]]},
+  "1":{
+    "minInstances":5,
+    "maxInstances":5,
+    "minLength":32,
+    "maxLength":64,
+    "timeToNextLed":100,
+    "moves":{
+      "startDirection": ["right","up"],
+      "startRings": [2],
+      "startGroups": [2],
+      "changeMove": 0.9,
+      "movesAllowed": ["left", "right", "up", "down"],
+      "moveOutsideGroup": 0.5},
+    "ledPattern":
+    [[0,0,0],
+     [128,128, 1400],
+     [254,254, 1600],
+     [178,34,2000],
+     [254,78, 3000],
+     [0,0,4000]]}
 }

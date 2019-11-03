@@ -8,15 +8,15 @@
 	run tests.py
 	choosePort() # getting deprecated
 ```
-## Definitions & Data
+## Definitions
 `WichitaALLStrands.json` is a key:value setup
 
-**ring**: the outer-most is 1 and the inner 3.
-**group**: left-most (west) is 1 and right-most is 3
-**left**: ID of any strands adjacent to the left
-**right**: ID of any strand adjacent to the right (from the direction of the outside looking into the center on circle/groups 1 and 3, and from the inside looking out on circle/group 2).
+- **ring**: the outer-most is 1 and the inner 3.
+- **group**: left-most (west) is 1 and right-most is 3
+- **left**: ID of any strands adjacent to the left
+- **right**: ID of any strand adjacent to the right (from the direction of the outside looking into the center on circle/groups 1 and 3, and from the inside looking out on circle/group 2).
 
--  keys are strands (not birds)
+- keys are strands (not birds)
 - strands 0 and 25 are the two centers
 - Statuses of strands:
 	- 'dark birds': 14
@@ -25,7 +25,10 @@
 	- 'no birds': 12
 	- 'disabled': 4 # due to malfunction
 	- 'broken': 5
-	
+
+## Data
+### Variables
+
 ## Main Code
 - main.py is the main program
 - each sequence is a class.
@@ -60,5 +63,3 @@
 # Current Status
 - just wrote getStartLed. Not tested
 - by writing getStartLed we defined what the datatype of an LED is: an array of 2 elements
-- need to review list vs. array vs. tuple vs. object
-

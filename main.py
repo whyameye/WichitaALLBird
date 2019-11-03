@@ -39,7 +39,7 @@ class Seq(object):
         lenStartMoves = len(self.mode["moves"]["startDirection"])
         self.direction = self.mode["moves"]["startDirection"][random.randrange(0,lenStartMoves)]
         LedIndexOnStrand = random.randrange(0,len(strands[theChosenStrand]["y"])+1)
-        return [theChosenStrand, LedIndexOnStrand]
+        return [theChosenStrand, LedIndexOnStrand, True]
 
     def getViableMove(self):
         currentLED = self.activeLEDs[-1] # get last LED list in list of LED lists 
@@ -112,9 +112,9 @@ class Seq(object):
                 debug("found LED already in another active sequence. Stunt")
                 self.totalLeds = self.currentLedIndex
                 return False
-        self.activeLeds.append(ledIndex)
+        self.activeLeds.append(currentLed) # all Leds active in all sequences
         debug("activeLEDs: "+str(self.activeLeds));
-        self.leds.append([ledIndex, millis()])
+        self.leds.append([currentLed, millis()]) # Leds active in this instance only
         self.currentLedIndex += 1
 
 
@@ -129,15 +129,22 @@ class Seq(object):
         
 
     def updateLed(self,led):
+        """Update color of Led based on time
+        led passed in is off form [[strand, # on strand],time]
+        returns False unly if led state is changing from active to inactive
+        """
+        if led[0][2] == False: # inactive LED
+            return True
+        
         deltaTime = millis() - led[1]
-        ledPatterns = (self.mode['ledPattern'])
+        ledPatterns = self.mode['ledPattern']
         inPattern = False
         for j in range(len(ledPatterns)):
             theColors = [0,0,0]
-            if ledPatterns[j][3] > deltaTime:
-                ddTime = 0.0 + deltaTime - ledPatterns[j-1][3]
-                tTime = 0.0 + ledPatterns[j][3] - ledPatterns[j-1][3]
-                for k in range(3):
+            if ledPatterns[j][2] > deltaTime:
+                ddTime = 0.0 + deltaTime - ledPatterns[j-1][2]
+                tTime = 0.0 + ledPatterns[j][2] - ledPatterns[j-1][2]
+                for k in range(2):
                     diffColor = ledPatterns[j][k] - ledPatterns[j-1][k]
                     theColors[k]=int(round(ddTime*(diffColor/tTime)+ledPatterns[j-1][k]))
                 inPattern = True
@@ -146,24 +153,21 @@ class Seq(object):
         # debug("RGB: "+str(R)+" "+str(G)+" "+str(B))
         # TODO: set strip color
         # strip.setPixelColor(ledSequence[led[0]],Color(theColors[0],theColors[1],theColors[2]))
+        led[0][2] = inPattern
         return inPattern
 
     def update(self):
-        """continually call this high-level update method
+        """continually call this high-level update method.
         returns False if all Leds have gone through all states
         """
         self.addLed(self.leds)
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
-                # debug("updateLed: "+str(self.leds[i]))
-                try:
-                    self.activeLeds.remove(self.leds[i][0])
-                except:
-                    # self.leds.remove(self.leds[i])
-                    if (i == (self.totalLeds-1)):
-                        # assert(self.leds == [])
-                        debug("kill sequence...")
-                        return False
+                self.activeLeds.remove(self.leds[i][0])
+                if (i == (self.totalLeds-1)):
+                    assert(self.leds == [])
+                    debug("kill sequence...")
+                    return False
         return True
 
 

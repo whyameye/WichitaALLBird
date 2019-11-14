@@ -122,6 +122,10 @@ class Seq(object):
         else:
             debug("adding additional LED...")
             currentLed = self.getAdditionalLed()
+            if currentLed == False:
+                debug("No viable moves. Stunt")
+                self.totalLeds = self.currentLedIndex
+                return False
             debug("added additional led: "+str(currentLed))
         if currentLed in self.activeLeds:
             if self.currentLedIndex == 0:

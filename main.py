@@ -33,7 +33,7 @@ class Seq(object):
         possibleStrandsInGroups = []
         for i in possibleStartGroups:
             possibleStrandsInGroups += strandsInGroup[i]
-        possibleStrands = list(set(possibleStartRings) & set(possibleStartGroups))
+        possibleStrands = list(set(possibleStrandsInRings) & set(possibleStrandsInGroups))
         theChosenStrandIndex = random.randrange(0,len(possibleStrands))
         theChosenStrand = possibleStrands[theChosenStrandIndex]
         lenStartMoves = len(self.mode["moves"]["startDirection"])
@@ -140,8 +140,6 @@ class Seq(object):
         """Update color of Led based on time
         led passed in is off form [[strand, # on strand],time]
         returns False only if led state is changing from active to inactive
-        FIXME: amirite that LEDs are never set to inactive anywhere in the code?
-        and wouldn't that happen in this method?
         """
         if led[0][2] == False: # inactive LED
             return True
@@ -173,14 +171,15 @@ class Seq(object):
         self.addLed(self.leds)
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
-                try:
-                    debug("removing led: "+str(self.leds[i][0]))
-                    self.activeLeds.remove(self.leds[i][0])
-                except:
-                    if (i == (self.totalLeds-1)):
-                        assert(self.leds == [])
-                        debug("kill sequence...")
-                        return False
+                debug("removing led: "+str(self.leds[i][0]))
+                self.activeLeds.remove(self.leds[i][0])
+                debug("active LEDs left:"+str(self.activeLeds));
+                debug("sequence LEDs left:"+str(self.leds));
+
+                if (i == (self.totalLeds-1)): # we are rempving the last LED in the sequence
+                    # assert(self.leds == [])
+                    debug("kill sequence...")
+                    return False
         return True
 
 
@@ -247,10 +246,11 @@ if __name__ == '__main__':
     strands = {}
     strandsInRing = []
     strandsInGroup = []
+    mode = 0
     loadGlobalVariables()
 
     # start in Mode 0
-    generateSequences(modes[0], newTrig)
+    generateSequences(modes[mode], newTrig)
     trigTime = 0
 
     # loop
@@ -270,4 +270,5 @@ if __name__ == '__main__':
                 del sequence # delete class in environment
                 # mode = ((millis() - trigTime) < TRIGGER_LENGTH) TODO
                 generateSequences(modes[mode], newTrig)
+        time.sleep(.001)
         # strip.show()

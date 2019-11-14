@@ -38,13 +38,28 @@ class Seq(object):
         theChosenStrand = possibleStrands[theChosenStrandIndex]
         lenStartMoves = len(self.mode["moves"]["startDirection"])
         self.direction = self.mode["moves"]["startDirection"][random.randrange(0,lenStartMoves)]
-        LedIndexOnStrand = random.randrange(0,len(strands[theChosenStrand]["y"])+1)
+        LedIndexOnStrand = random.randrange(0,len(strands[theChosenStrand]["y"]))
         return [theChosenStrand, LedIndexOnStrand, True]
 
+    def chooseLEDOnStrand(self, currentLED, currentStrand, strandToTry):
+        if (random.random() > CHANCE_OF_PICKING_CLOSEST_Y):
+            return [strandToTry, random.randrange(0,len(strands[strandToTry]["y"])), True]
+        print("current Strand: "+str(currentStrand))
+        print("current LED: "+str(currentLED))
+        print("strand to Try: "+str(strandToTry))
+        CurrentLEDPos = strands[currentStrand]["y"][currentLED[0][1]]
+        PossibleLEDPoses = strands[strandToTry]["y"]
+        distances = [abs(i - CurrentLEDPos) for i in PossibleLEDPoses]
+        return [strandToTry, distances.index(min(distances)), True]
+
     def getViableMove(self):
-        currentLED = self.activeLEDs[-1] # get last LED list in list of LED lists 
-        currentStrand = currentLED[0]
-        currentLEDIndexOnStrand = currentLED[1]
+        """get a viable move for an already chosen direction.
+        returns 1st half of LED list (without millis())
+        if no move is viable, return False
+        """
+        currentLED = self.leds[-1] # get last LED list in list of LED lists 
+        currentStrand = currentLED[0][0]
+        currentLEDIndexOnStrand = currentLED[0][1]
         if self.direction == "left" or self.direction == "right":
             try:
                 possibleStrands = strands[currentStrand][self.direction].copy()
@@ -53,38 +68,41 @@ class Seq(object):
             while len(possibleStrands) > 0:
                 i = random.randrange(0,len(possibleStrands))
                 strandToTry = possibleStrands.pop(i)
-                if testViableMove(currentStrand, strandToTry):
-                    return chooseLEDOnStrand(currentStrand, strandToTry)
+                if self.testViableMove(currentStrand, strandToTry):
+                    return self.chooseLEDOnStrand(currentLED, currentStrand, strandToTry)
             return False
-        if self.direction == "up" and currentLEDOnStrand > 0:
-            return [currentStrand, currentLEDOnStrand - 1]
-        if self.direction == "down" and currentLEDOnStrand < len(strands[currentStrand]["y"]):
-            return [currentStrand, currentLEDOnStrand + 1]
+        if self.direction == "up" and currentLEDIndexOnStrand > 0:
+            return [currentStrand, currentLEDIndexOnStrand - 1, True]
+        if self.direction == "down" and currentLEDIndexOnStrand < (len(strands[currentStrand]["y"])-1):
+            return [currentStrand, currentLEDIndexOnStrand + 1, True]
         return False
 
     def testViableMove(self,currentStrand, strandToTry):
-        if (modes[mode]["moveOutsideGroup"] == "N" and
+        if (self.mode["moves"]["moveOutsideGroup"].upper() == "N" and
             strands[currentStrand]["group"] != strands[strandToTry]["group"]):
             return False
-        if (modes[mode]["moveOutsideRing"] == "N" and
+        if (self.mode["moves"]["moveOutsideRing"].upper() == "N" and
             strands[currentStrand]["ring"] != strands[strandToTry]["ring"]):
             return False
+        return True
         
 
     def getAdditionalLed(self):
         """find an Led that meets the criteria
         randomly trying different directions if needed
+        returns LED to light described as list: [strand, index of y element in strand]
+        returns False if no viable move is possible
         """
-        viableMove = getViableMove() if random.random > modes[self.mode]["changeMove"] else False
+        viableMove = self.getViableMove() if random.random() > self.mode["moves"]["changeMove"] else False
         if viableMove == False:
-            movesAllowed = modes[self.mode]["movesAllowed"].copy()
+            movesAllowed = self.mode["moves"]["movesAllowed"].copy()
             numMovesAllowed = len(movesAllowed)
 
         while viableMove == False:
             if numMovesAllowed == 0:
                 return False
             self.direction = movesAllowed.pop(random.randrange(0,numMovesAllowed))
-            viableMove = getViableMove()
+            viableMove = self.getViableMove()
             numMovesAllowed -= 1
         return viableMove
 
@@ -102,6 +120,7 @@ class Seq(object):
             debug("added first led: "+str(currentLed))
 
         else:
+            debug("adding additional LED...")
             currentLed = self.getAdditionalLed()
             debug("added additional led: "+str(currentLed))
         if currentLed in self.activeLeds:
@@ -117,21 +136,12 @@ class Seq(object):
         self.leds.append([currentLed, millis()]) # Leds active in this instance only
         self.currentLedIndex += 1
 
-
-    def chooseLEDOnStrand(currentStrand, strandToTry):
-        if (random.random > CHANCE_OF_PICKING_CLOSEST_Y):
-            return [strandToTry, random.randrange(0,len(strands[testStrand]["y"])+1)]
-        CurrentLEDPos = strands[currentLED[0]]["y"][currentLED[1]]
-        PossibleLEDPoses - strands[strandToTry]["y"]
-        distances = [abs(i - CurrentLEDPos) for i in PossibleLEDPoses]
-        return distances.index(min(distances))
-                         
-        
-
     def updateLed(self,led):
         """Update color of Led based on time
         led passed in is off form [[strand, # on strand],time]
-        returns False unly if led state is changing from active to inactive
+        returns False only if led state is changing from active to inactive
+        FIXME: amirite that LEDs are never set to inactive anywhere in the code?
+        and wouldn't that happen in this method?
         """
         if led[0][2] == False: # inactive LED
             return True
@@ -163,11 +173,14 @@ class Seq(object):
         self.addLed(self.leds)
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
-                self.activeLeds.remove(self.leds[i][0])
-                if (i == (self.totalLeds-1)):
-                    assert(self.leds == [])
-                    debug("kill sequence...")
-                    return False
+                try:
+                    debug("removing led: "+str(self.leds[i][0]))
+                    self.activeLeds.remove(self.leds[i][0])
+                except:
+                    if (i == (self.totalLeds-1)):
+                        assert(self.leds == [])
+                        debug("kill sequence...")
+                        return False
         return True
 
 
@@ -239,10 +252,9 @@ if __name__ == '__main__':
     # start in Mode 0
     generateSequences(modes[0], newTrig)
     trigTime = 0
-    
+
     # loop
     while True:
-        break;
         # TODO the entire below block is for new modes placeholder for now
         if False: # this is where a new mode would be triggered
             print("NEW MODE")

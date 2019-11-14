@@ -28,6 +28,8 @@
 
 ## Data
 ### Variables
+ - active LED is a list of 3: [strand, index of Y element in strand, T/F active]
+  - LEDs in sequence include time: [[strand, index of Y element in strand, T/F active], abs time]
 
 ## Main Code
 - main.py is the main program
@@ -61,5 +63,7 @@
 - replace startLed with random generation based on constraints in moves
 
 # Current Status
-- just wrote getStartLed. Not tested
-- by writing getStartLed we defined what the datatype of an LED is: an array of 2 elements
+- sequence *appears* to generate but is not fully verified
+- deleting LEDs doesn't seem to be working correctly
+- sequences are never deleted/regenerated
+- currently digging in at the `update()` code where the try/except clause is

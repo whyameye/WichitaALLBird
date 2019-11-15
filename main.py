@@ -52,6 +52,12 @@ class Seq(object):
         distances = [abs(i - CurrentLEDPos) for i in PossibleLEDPoses]
         return [strandToTry, distances.index(min(distances)), True]
 
+    def getClosestYIndex(self, currentStrand, currentLEDIndex, nextStrand):
+        currentY = strands[currentStrand]["y"][currentLEDIndex]
+        deltaY = [abs(currentY - i) for i in strands[nextStrand]["y"]]
+        print("deltaY Index: "+str(deltaY.index(min(deltaY))))
+        return deltaY.index(min(deltaY))
+    
     def getViableMove(self):
         """get a viable move for an already chosen direction.
         returns 1st half of LED list (without millis())
@@ -75,6 +81,11 @@ class Seq(object):
             return [currentStrand, currentLEDIndexOnStrand - 1, True]
         if self.direction == "down" and currentLEDIndexOnStrand < (len(strands[currentStrand]["y"])-1):
             return [currentStrand, currentLEDIndexOnStrand + 1, True]
+        for i in ["inner", "outer"]:
+            if self.direction == i and strands[currentStrand].get(i):
+                nextStrand = strands[currentStrand][i]
+                return [nextStrand,
+                        self.getClosestYIndex(currentStrand, currentLEDIndexOnStrand, nextStrand), True]
         return False
 
     def testViableMove(self,currentStrand, strandToTry):
@@ -279,7 +290,6 @@ if __name__ == '__main__':
     loadGlobalVariables()
     addInniesAndOuties()
 
-    """
     # start in Mode 0
     generateSequences(modes[mode], newTrig)
     trigTime = 0
@@ -303,4 +313,4 @@ if __name__ == '__main__':
                 generateSequences(modes[mode], newTrig)
         time.sleep(.001)
         # strip.show()
-"""
+

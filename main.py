@@ -1,4 +1,4 @@
-import json, time, random
+import json, time, random, sys
 import serialTest
 
 DEBUG = True
@@ -205,6 +205,30 @@ def debug(str):
 def millis():
     return int(round(time.time() * 1000))
 
+def addInniesAndOuties():
+    for outerRing in range(1,3):
+        for strandInOuterRing in strandsInRing[outerRing]:
+            # print("outer: "+str(strandInOuterRing))
+            distances = []
+            for strandInInnerRing in strandsInRing[outerRing+1]:
+                # print("inner: "+str(strandInInnerRing))
+                if strandInInnerRing != strandInOuterRing:
+                    deltaX = (strands[strandInOuterRing]["x"] -
+                              strands[strandInInnerRing]["x"])
+                    deltaZ = (strands[strandInOuterRing]["z"] -
+                              strands[strandInInnerRing]["z"])
+                    distances.append(deltaX**2 + deltaZ**2)
+                else:
+                    distances.append(sys.maxsize) # for indexing
+                    # print("EQUAL")
+                    
+
+            closestInner = strandsInRing[outerRing+1][distances.index(min(distances))]
+            # print("outer: "+str(strandInOuterRing))
+            # print("inner: "+str(closestInner))
+            strands[strandInOuterRing]["inner"]=closestInner
+            strands[closestInner]["outer"]=strandInOuterRing
+            
 def loadGlobalVariables():
     """create list of integers representing strand #s depending on what ring and group they are in
     """
@@ -252,7 +276,9 @@ if __name__ == '__main__':
     strandsInGroup = []
     mode = 0
     loadGlobalVariables()
+    addInniesAndOuties()
 
+    """
     # start in Mode 0
     generateSequences(modes[mode], newTrig)
     trigTime = 0
@@ -276,3 +302,4 @@ if __name__ == '__main__':
                 generateSequences(modes[mode], newTrig)
         time.sleep(.001)
         # strip.show()
+"""

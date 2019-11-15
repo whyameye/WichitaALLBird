@@ -206,6 +206,7 @@ def millis():
     return int(round(time.time() * 1000))
 
 def addInniesAndOuties():
+    """adds closest inner and outer to json"""
     for outerRing in range(1,3):
         for strandInOuterRing in strandsInRing[outerRing]:
             # print("outer: "+str(strandInOuterRing))
@@ -219,9 +220,9 @@ def addInniesAndOuties():
                               strands[strandInInnerRing]["z"])
                     distances.append(deltaX**2 + deltaZ**2)
                 else:
-                    distances.append(sys.maxsize) # for indexing
+                    distances.append(sys.maxsize) # add it for indexing but make it unpickable
                     # print("EQUAL")
-                    
+
 
             closestInner = strandsInRing[outerRing+1][distances.index(min(distances))]
             # print("outer: "+str(strandInOuterRing))

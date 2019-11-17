@@ -26,10 +26,24 @@
 	- 'disabled': 4 # due to malfunction
 	- 'broken': 5
 
+## Hardware
+- 10 Arduinos (aka Servers) numbered 0 through 9
+- up to 18 strands on an Arduino numbered 0 through 17
+
 ## Data
 ### Variables
  - active LED is a list of 3: [strand, index of Y element in strand, T/F active]
   - LEDs in sequence include time: [[strand, index of Y element in strand, T/F active], abs time]
+
+### Sending colors to LEDS
+one idea is to have a different thread for each arduino:
+- spin out the threads then do a `.join()` before you spin out the next set
+- this would require the LEDs to be sorted by Arduino in the main thread?
+- issue: serial port needs to be opened every time we spin out the thread?
+- solution: don't ever join the threads. Let them run forever (daemons?) and have them set an index in an array when waiting for input. This has the problem of data corruption tho
+- _need to test how long it takes to open/close port_
+- if going with the original idea, it appears the thread gets sent a copy of the array not the array itself (good)
+- original idea feels bad. Maybe better to go with proposed solution and copy arrays as needed...
 
 ## Main Code
 - main.py is the main program
@@ -53,6 +67,7 @@
 - **tests.py**: tests focused on higher-level logic of bird paths etc.
 - **WichitaALLStrands.json**: JSON file with most current data of strands.
 
+
 ## TODO
 - add necessary parameters for mode 0
 - convert mode 0 to be a json file and code reads the file
@@ -62,7 +77,17 @@
 ### Mode changes
 - replace startLed with random generation based on constraints in moves
 
+# Incomplete
+- no code currently to return to default mode after specified amount of time (commented out in code)
+
 # Current Status
+
+##16-Nov-2019
+- TODO: test if colors of LEDs are really changing
+- TODO: try mode change
+- TODO: add code mapping Arduino IDs to Serial ports
+
+##14-Nov-2019
 - sequence *appears* to generate but is not fully verified
 - deleting LEDs doesn't seem to be working correctly
 - sequences are never deleted/regenerated

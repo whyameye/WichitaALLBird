@@ -1,5 +1,5 @@
 import json, time, random, sys
-import serialTest
+import serialComm
 
 DEBUG = True
 CHANCE_OF_PICKING_CLOSEST_Y = 0.8
@@ -154,7 +154,7 @@ class Seq(object):
 
     def updateLed(self,led):
         """Update color of Led based on time
-        led passed in is off form [[strand, # on strand],time]
+        led passed in is of form [[strand, # on strand, T/F active],time]
         returns False only if led state is changing from active to inactive
         """
         if led[0][2] == False: # inactive LED
@@ -164,13 +164,13 @@ class Seq(object):
         ledPatterns = self.mode['ledPattern']
         inPattern = False
         for j in range(len(ledPatterns)):
-            theColors = [0,0,0]
+            colorAndAmp = [0,0]
             if ledPatterns[j][2] > deltaTime:
                 ddTime = 0.0 + deltaTime - ledPatterns[j-1][2]
                 tTime = 0.0 + ledPatterns[j][2] - ledPatterns[j-1][2]
                 for k in range(2):
-                    diffColor = ledPatterns[j][k] - ledPatterns[j-1][k]
-                    theColors[k]=int(round(ddTime*(diffColor/tTime)+ledPatterns[j-1][k]))
+                    diffColorOrAmp = ledPatterns[j][k] - ledPatterns[j-1][k]
+                    colorAndAmp[k]=int(round(ddTime*(diffColororAmp/tTime)+ledPatterns[j-1][k]))
                 inPattern = True
                 break;
             

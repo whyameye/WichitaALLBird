@@ -36,19 +36,15 @@
   - LEDs in sequence include time: [[strand, index of Y element in strand, T/F active], abs time]
 
 ### Sending colors to LEDS
-one idea is to have a different thread for each arduino:
-- spin out the threads then do a `.join()` before you spin out the next set
-- this would require the LEDs to be sorted by Arduino in the main thread?
-- issue: serial port needs to be opened every time we spin out the thread?
-- solution: don't ever join the threads. Let them run forever (daemons?) and have them set an index in an array when waiting for input. This has the problem of data corruption tho
-- _need to test how long it takes to open/close port_
-- if going with the original idea, it appears the thread gets sent a copy of the array not the array itself (good)
-- original idea feels bad. Maybe better to go with proposed solution and copy arrays as needed...
+- open serial ports in main thread
+- spin off threads, one for each port, and send LEDs
+- join threads, rinse and repeat
+- this would require the LEDs to be sorted by Arduino in the main thread
 
 ## Main Code
 - main.py is the main program
-- each sequence is a class.
-     - there is no threading (I think)?
+- each sequence is an instance of a class.
+  - there is no threading in the class or instances
 
 ## Files
 - **birds_sample.dat**: sample JSON file of strand key:value pairs
@@ -82,12 +78,12 @@ one idea is to have a different thread for each arduino:
 
 # Current Status
 
-##16-Nov-2019
+## 16-Nov-2019
 - TODO: test if colors of LEDs are really changing
 - TODO: try mode change
 - TODO: add code mapping Arduino IDs to Serial ports
 
-##14-Nov-2019
+## 14-Nov-2019
 - sequence *appears* to generate but is not fully verified
 - deleting LEDs doesn't seem to be working correctly
 - sequences are never deleted/regenerated

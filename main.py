@@ -3,6 +3,7 @@ import serialTest
 
 DEBUG = True
 CHANCE_OF_PICKING_CLOSEST_Y = 0.8
+NUMBER_OF_SERVERS = 10
 
 class Seq(object):
     activeLeds = []
@@ -240,7 +241,21 @@ def addInniesAndOuties():
             # print("inner: "+str(closestInner))
             strands[strandInOuterRing]["inner"]=closestInner
             strands[closestInner]["outer"]=strandInOuterRing
-            
+
+def initializeServerLedLists():
+    global serverLedLists
+    
+    serverLedLists = []
+    for i in range(NUMBER_OF_SERVERS):
+        serverLedLists.append([])
+
+def sendLedListsToServers():
+    '''TODO
+    join all the old processes if they exist (they won't first time around
+    spin out new processes
+    '''
+    pass
+
 def loadGlobalVariables():
     """create list of integers representing strand #s depending on what ring and group they are in
     """
@@ -266,6 +281,7 @@ def loadGlobalVariables():
             if j in strands[i]["group"]:
                 strandsInGroup[j].append(i)
 
+
 def generateSequences(mode, newTrig):
     numOfSeqs = random.randrange(mode['minInstances'],mode['maxInstances']+1)
     while (len(allTheSeqs) < numOfSeqs) or (newTrig == True):
@@ -286,6 +302,7 @@ if __name__ == '__main__':
     strands = {}
     strandsInRing = []
     strandsInGroup = []
+    serverLedLists=[]
     mode = 0
     loadGlobalVariables()
     addInniesAndOuties()
@@ -302,6 +319,7 @@ if __name__ == '__main__':
             newTrig = True # force new sequence to start
             mode = 0 # should be new mode
             trigTime = millis()
+        initializeServerLedLists()
         updateMode()
         for sequence in allTheSeqs: # allTheSeqs is a list of classes we will now traverse
             if not sequence.update(): # if sequence should die
@@ -309,8 +327,9 @@ if __name__ == '__main__':
                 sequence.remove() # LWT for the sequence. Probably unnecessary
                 allTheSeqs.remove(sequence) # remove from the list
                 del sequence # delete class in environment
-                # mode = ((millis() - trigTime) < TRIGGER_LENGTH) TODO
+                # mode = ((millis() - trigTime) < TRIGGER_LENGTH) TODO return to default mode after time period
                 generateSequences(modes[mode], newTrig)
+        sendLedListsToServers()
         time.sleep(.001)
         # strip.show()
 

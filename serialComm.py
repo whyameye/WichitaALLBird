@@ -1,4 +1,4 @@
-import Serial
+import serial, threading, time
 
 serverIdPortDict = {}
 colorAndAmp = []
@@ -66,7 +66,7 @@ def sendToServers(firstTime):
     
     if not(firstTime):
         for i in range(NUMBER_OF_SERVERS):
-            serverThreads[i].join
+            serverThreads[i].join()
 
     serverThreads = []
     for i in range(NUMBER_OF_SERVERS):

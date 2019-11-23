@@ -1,15 +1,19 @@
-import serial, threading, time
+import serial, threading, time, os
 from common import *
 
 serverIdPortDict = {}
 colorAndAmp = []
 ports = []
-BAUDRATE = 2000000
+BAUDRATE = 115200
 serverThreads = []
+def resetArduino(port):
+    # must call 2x for some unknown reason
+    os.system("./dtr "+port)
+    os.system("./dtr "+port)
 
 def getID(ser):
-    ans = 10
-    while ans > 9:
+    ans = chr(10)
+    while ord(ans) > 9:
         debug("trying to read ID")
         msg = ""    
         bytes = []
@@ -21,7 +25,7 @@ def getID(ser):
         try: 
             ans = msg[0]
         except:
-            ans = 10
+            ans = chr(10)
             time.sleep(.5)
     return ans
 

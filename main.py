@@ -57,7 +57,7 @@ class Seq(object):
     def getClosestYIndex(self, currentStrand, currentLEDIndex, nextStrand):
         currentY = strands[currentStrand]["y"][currentLEDIndex]
         deltaY = [abs(currentY - i) for i in strands[nextStrand]["y"]]
-        print("deltaY Index: "+str(deltaY.index(min(deltaY))))
+        debug("deltaY Index: "+str(deltaY.index(min(deltaY))))
         return deltaY.index(min(deltaY))
     
     def getViableMove(self):

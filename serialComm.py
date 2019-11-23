@@ -1,4 +1,5 @@
 import serial, threading, time
+from common import *
 
 serverIdPortDict = {}
 colorAndAmp = []

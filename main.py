@@ -1,9 +1,10 @@
-import json, time, random, sys
-import serialComm
+#!/usr/bin/python3
 
-DEBUG = True
+import json, time, random, sys
+from serialComm import *
+from common import *
+
 CHANCE_OF_PICKING_CLOSEST_Y = 0.8
-NUMBER_OF_SERVERS = 10
 
 class Seq(object):
     activeLeds = []
@@ -209,10 +210,6 @@ def loadJSON(filename):
     jsonResult = json.loads(f.read())
     f.close()
     return jsonResult
-
-def debug(str):
-    if DEBUG:
-        print("DEBUG: "+str)
 
 def millis():
     return int(round(time.time() * 1000))

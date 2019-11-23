@@ -32,9 +32,14 @@
 
 ## Data
 ### Variables
- - active LED is a list of 3: [strand, index of Y element in strand, T/F active]
-  - LEDs in sequence include time: [[strand, index of Y element in strand, T/F active], abs time]
-
+ - active LED is a list of 3: [strand #, index of Y element in strand, T/F active]
+  - LEDs in sequence include time: [[strand #, index of Y element in strand, T/F active], abs time]
+ - serverLedLists is an array of arrays with each index to the parent array representing a server ID
+    - The child arrays are lists of LEDs to change of the form [<strand #>, <numOnStrand>, <color>, <amplitude>]
+    - strand #: uint8
+    - numOnStrand: uint8
+    - color: uint8
+    - amplitude: uint8
 ### Sending colors to LEDS
 - open serial ports in main thread
 - spin off threads, one for each port, and send LEDs
@@ -77,6 +82,8 @@
 - no code currently to return to default mode after specified amount of time (commented out in code)
 
 # Current Status
+
+
 
 ## 16-Nov-2019
 - TODO: test if colors of LEDs are really changing

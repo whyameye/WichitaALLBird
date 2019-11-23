@@ -171,10 +171,16 @@ class Seq(object):
                 tTime = 0.0 + ledPatterns[j][2] - ledPatterns[j-1][2]
                 for k in range(2):
                     diffColorOrAmp = ledPatterns[j][k] - ledPatterns[j-1][k]
-                    colorAndAmp[k]=int(round(ddTime*(diffColororAmp/tTime)+ledPatterns[j-1][k]))
+                    colorAndAmp[k]=int(round(ddTime*(diffColorOrAmp/tTime)+ledPatterns[j-1][k]))
                 inPattern = True
                 break;
-            
+        strand = strands[led[0][0]]
+        serverToAssign = strand["arduinoID"]
+        strandOnServer = strand["strandOnArduino"]
+        numOnStrand = led[0][1]
+        color = colorAndAmp[0]
+        amp = colorAndAmp[1]
+        addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp)
         # debug("RGB: "+str(R)+" "+str(G)+" "+str(B))
         # TODO: set strip color
         # strip.setPixelColor(ledSequence[led[0]],Color(theColors[0],theColors[1],theColors[2]))
@@ -239,19 +245,6 @@ def addInniesAndOuties():
             strands[strandInOuterRing]["inner"]=closestInner
             strands[closestInner]["outer"]=strandInOuterRing
 
-def initializeServerLedLists():
-    global serverLedLists
-    
-    serverLedLists = []
-    for i in range(NUMBER_OF_SERVERS):
-        serverLedLists.append([])
-
-def sendLedListsToServers():
-    '''TODO
-    join all the old processes if they exist (they won't first time around
-    spin out new processes
-    '''
-    pass
 
 def loadGlobalVariables():
     """create list of integers representing strand #s depending on what ring and group they are in
@@ -299,13 +292,13 @@ if __name__ == '__main__':
     strands = {}
     strandsInRing = []
     strandsInGroup = []
-    serverLedLists=[]
     mode = 0
     loadGlobalVariables()
     addInniesAndOuties()
 
     # start in Mode 0
     generateSequences(modes[mode], newTrig)
+    begin()
     trigTime = 0
 
     # loop
@@ -326,7 +319,7 @@ if __name__ == '__main__':
                 del sequence # delete class in environment
                 # mode = ((millis() - trigTime) < TRIGGER_LENGTH) TODO return to default mode after time period
                 generateSequences(modes[mode], newTrig)
-        sendLedListsToServers()
+        sendToServers()
         time.sleep(.001)
         # strip.show()
 

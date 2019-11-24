@@ -1,4 +1,5 @@
 from enum import Enum
+import time
 
 class Log(Enum):
     VERY_VERBOSE = 1
@@ -13,4 +14,4 @@ DRY_RUN = True
 
 def log(level, msg):
     if level.value >= LOG_LEVEL.value:
-        print("%s: %s" %(level, msg))
+        print("%d %s: %s" %(int(round(time.time())), level, msg))

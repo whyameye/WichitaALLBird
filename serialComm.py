@@ -87,8 +87,10 @@ def sendToServer(serverID):
                 # import pdb; pdb.set_trace()
                 # print("ServerID: %d, strandOnServer: %d, numOnStrand: %d, color: %d, amp: %d"  %(serverID, strandOnServer, numOnStrand, color, amp))
                 setLED(port, strandOnServer, numOnStrand, color, amp)
+                time.sleep(.0006)
         else:
             setLED(port, strandOnServer, numOnStrand, color, amp)
+            time.sleep(.0006)
             
 
 def sendToServers():

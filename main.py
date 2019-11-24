@@ -304,7 +304,7 @@ if __name__ == '__main__':
 
     begin() # initialize serial communication
     trigTime = millis()
-    
+
     # loop
     while True:
         # modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex

@@ -11,7 +11,6 @@ class Seq(object):
     
     def __init__(self, mode):
         self.mode = mode
-        self.startTime = millis()
         self.leds = [] # list of LEDs we're currently controlling
         self.totalLeds = random.randrange(self.mode['minLength'],
                                           self.mode['maxLength']+1)
@@ -123,23 +122,30 @@ class Seq(object):
         """add first or next LED in sequence
         returns True if LED was successfully added, otherwise False
         """
-        deltaTime = millis() - self.startTime
+
+        if self.currentLedIndex == 0:
+            currentLed = self.getStartLed() # list of 2 elements
+            debug("added first led: "+str(currentLed))
+            self.startTime = millis()
+            self.currentLedIndex = 1
+            self.activeLeds.append(currentLed) # all Leds active in all sequences
+            # debug("activeLEDs: "+str(self.activeLeds));
+            self.leds.append([currentLed, millis()]) # Leds active in this instance only
+            return True
+            
+        deltaTime = millis() - self.startTime        
         if ((deltaTime < (self.currentLedIndex * self.mode['timeToNextLed'])) or
             (self.currentLedIndex >= self.totalLeds)):
             return False
         
-        if self.currentLedIndex == 0:
-            currentLed = self.getStartLed() # list of 2 elements
-            debug("added first led: "+str(currentLed))
-
-        else:
-            debug("adding additional LED...")
-            currentLed = self.getAdditionalLed()
-            if currentLed == False:
-                debug("No viable moves. Stunt")
-                self.totalLeds = self.currentLedIndex
-                return False
-            debug("added additional led: "+str(currentLed))
+        debug("adding additional LED...")
+        currentLed = self.getAdditionalLed()
+        if currentLed == False:
+            debug("No viable moves. Stunt")
+            self.totalLeds = self.currentLedIndex
+            return False
+        
+        # debug("added additional led: "+str(currentLed))
         if currentLed in self.activeLeds:
             if self.currentLedIndex == 0:
                 debug("1st LED already in list. Kill the sequence")

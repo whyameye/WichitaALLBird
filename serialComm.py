@@ -76,6 +76,8 @@ def setLED(ser, strand, numOnStrand, color, amplitude):
 def sendToServer(serverID):
     port = serverIdToPortList[serverID]
     # import pdb; pdb.set_trace()
+    if serverLedLists[serverID] == []:
+        serverLedLists[serverID].append([31, 0, 0, 0]) # 31 is a nonexistent strand on all servers
     for i in serverLedLists[serverID]:
         strandOnServer = i[0]
         numOnStrand = i[1]

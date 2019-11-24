@@ -1,8 +1,7 @@
 import serial, threading, time, os
 from common import *
 
-serverIdPortDict = {}
-ports = []
+serverIdToPortList = []
 BAUDRATE = 115200
 serverThreads = []
 serverLedLists=[]
@@ -53,17 +52,18 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
     '''create arduinoID -> port dictionary
     open ports
     '''
-    global serverIdPortDict
+    global serverIdToPortList
     
     if DRY_RUN:
-        for i in range(numOfServers):
-            serverIdPortDict[i] = i
+        resetArduino("/dev/ttyUSB0")
+        serverIdToPortList.append(serial.Serial("/dev/ttyUSB0", BAUDRATE))
+        for i in range(1,numOfServers):
+            serverIdToPortList.append(i)
         return
     
     for i in range(numOfServers):
         resetArduino("/dev/ttyUSB"+str(i))
-        ports.append(serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE))
-        serverIdPortDict[ord(getID(ports[i]))] = i
+        serverIdToPortList.append(serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE))
 
 def setLED(ser, strand, numOnStrand, color, amplitude):
     bytes = []
@@ -74,7 +74,7 @@ def setLED(ser, strand, numOnStrand, color, amplitude):
     ser.write(serial.to_bytes(bytes))
 
 def sendToServer(serverID):
-    port = serverIdPortDict[serverID]
+    port = serverIdToPortList[serverID]
     # import pdb; pdb.set_trace()
     for i in serverLedLists[serverID]:
         strandOnServer = i[0]
@@ -83,7 +83,10 @@ def sendToServer(serverID):
         amp = i[3]
         if DRY_RUN:
             pass
-            debug("Port: %d, strandOnServer: %d, numOnStrand: %d, color: %d, amp: %d"  %(port, strandOnServer, numOnStrand, color, amp))  
+            if serverID == 0:
+                # import pdb; pdb.set_trace()
+                # print("ServerID: %d, strandOnServer: %d, numOnStrand: %d, color: %d, amp: %d"  %(serverID, strandOnServer, numOnStrand, color, amp))
+                setLED(port, strandOnServer, numOnStrand, color, amp)
         else:
             setLED(port, strandOnServer, numOnStrand, color, amp)
             

@@ -9,8 +9,8 @@ class Log(Enum):
     ERROR = 5
 LOG_LEVEL = Log.VERBOSE
 
-NUMBER_OF_SERVERS = 10
-DRY_RUN = True
+NUMBER_OF_SERVERS = 9
+DRY_RUN = False
 
 def log(level, msg):
     if level.value >= LOG_LEVEL.value:

@@ -22,7 +22,8 @@ def initializeServerLedLists():
         serverLedLists.append([])
 
 def addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp):
-    serverLedLists[serverToAssign].append([strandOnServer, numOnStrand, color, amp])
+    if serverToAssign <= (NUMBER_OF_SERVERS - 1):
+        serverLedLists[serverToAssign].append([strandOnServer, numOnStrand, color, amp])
     
 def resetArduino(port):
     os.system("./dtr "+port)

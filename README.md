@@ -8,6 +8,11 @@
 	run tests.py
 	choosePort() # getting deprecated
 ```
+## Server (Arduino) Stuff
+### Uploading
+ - compile (verify)
+ - use `loadCode.sh` and `loadAllCode.sh` in this repo
+ 
 ## Definitions
 `WichitaALLStrands.json` is a key:value setup
 
@@ -82,8 +87,6 @@
 - no code currently to return to default mode after specified amount of time (commented out in code)
 
 # Current Status
-
-
 
 ## 16-Nov-2019
 - TODO: test if colors of LEDs are really changing

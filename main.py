@@ -5,7 +5,7 @@ from serialComm import *
 from common import *
 
 CHANCE_OF_PICKING_CLOSEST_Y = 0.8
-
+TRIGGER_LENGTH = 5000 # milliseconds before returning to mode 0
 class Seq(object):
     activeLeds = []
     
@@ -282,47 +282,47 @@ def generateSequences(mode, newTrig):
         log(Log.VERBOSE, "generating parameters for seq #"+str(len(allTheSeqs)+1))
         allTheSeqs.append(Seq(mode))
 
-def updateMode():
-    pass
+def updateMode(modeIndex):
+    newIndex = getInput()
+    if newIndex:
+        return int(newIndex[0])
+    return modeIndex
 
 # Main program logic:
 if __name__ == '__main__':
 
     # setup
     allTheSeqs = []
-    newTrig = False
     modes = {}
     strands = {}
     strandsInRing = []
     strandsInGroup = []
-    mode = 0
+    lastModeIndex = 99 # trigger generation since lastMode != mode
+    modeIndex = 0
     loadGlobalVariables()
     addInniesAndOuties()
 
-    # start in Mode 0
-    generateSequences(modes[mode], newTrig)
-    begin()
-    trigTime = 0
-
+    begin() # initialize serial communication
+    trigTime = millis()
+    
     # loop
     while True:
-        # TODO the entire below block is for new modes placeholder for now
-        if False: # this is where a new mode would be triggered
-            print("NEW MODE")
-            newTrig = True # force new sequence to start
-            mode = 0 # should be new mode
+        # modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
+        modeIndex = updateMode(modeIndex)
+        if lastModeIndex != modeIndex: # new mode triggered
+            log(Log.INFO, "NEW MODE: %d" %(modeIndex))
             trigTime = millis()
+            generateSequences(modes[modeIndex], True)
+            lastModeIndex = modeIndex
         initializeServerLedLists()
-        updateMode()
         for sequence in allTheSeqs: # allTheSeqs is a list of classes we will now traverse
             if not sequence.update(): # if sequence should die
                 log(Log.VERBOSE, "removing sequence")
                 sequence.remove() # LWT for the sequence. Probably unnecessary
                 allTheSeqs.remove(sequence) # remove from the list
                 del sequence # delete class in environment
-                # mode = ((millis() - trigTime) < TRIGGER_LENGTH) TODO return to default mode after time period
-                generateSequences(modes[mode], newTrig)
+                generateSequences(modes[modeIndex], False)
         sendToServers()
-        time.sleep(.001)
+        time.sleep(.01)
         # strip.show()
 

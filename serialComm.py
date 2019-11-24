@@ -81,16 +81,14 @@ def sendToServer(serverID):
         numOnStrand = i[1]
         color = i[2]
         amp = i[3]
+        time.sleep(.0006)
         if DRY_RUN:
-            pass
             if serverID == 0:
                 # import pdb; pdb.set_trace()
                 # print("ServerID: %d, strandOnServer: %d, numOnStrand: %d, color: %d, amp: %d"  %(serverID, strandOnServer, numOnStrand, color, amp))
                 setLED(port, strandOnServer, numOnStrand, color, amp)
-                time.sleep(.0006)
         else:
             setLED(port, strandOnServer, numOnStrand, color, amp)
-            time.sleep(.0006)
             
 
 def sendToServers():

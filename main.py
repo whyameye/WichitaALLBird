@@ -46,9 +46,9 @@ class Seq(object):
     def chooseLEDOnStrand(self, currentLED, currentStrand, strandToTry):
         if (random.random() > CHANCE_OF_PICKING_CLOSEST_Y):
             return [strandToTry, random.randrange(0,len(strands[strandToTry]["y"])), True]
-        print("current Strand: "+str(currentStrand))
-        print("current LED: "+str(currentLED))
-        print("strand to Try: "+str(strandToTry))
+        debug("current Strand: "+str(currentStrand))
+        debug("current LED: "+str(currentLED))
+        debug("strand to Try: "+str(strandToTry))
         CurrentLEDPos = strands[currentStrand]["y"][currentLED[0][1]]
         PossibleLEDPoses = strands[strandToTry]["y"]
         distances = [abs(i - CurrentLEDPos) for i in PossibleLEDPoses]
@@ -149,7 +149,7 @@ class Seq(object):
                 self.totalLeds = self.currentLedIndex
                 return False
         self.activeLeds.append(currentLed) # all Leds active in all sequences
-        debug("activeLEDs: "+str(self.activeLeds));
+        # debug("activeLEDs: "+str(self.activeLeds));
         self.leds.append([currentLed, millis()]) # Leds active in this instance only
         self.currentLedIndex += 1
 
@@ -194,7 +194,7 @@ class Seq(object):
         self.addLed(self.leds)
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
-                debug("removing led: "+str(self.leds[i][0]))
+                debug("removing led: "+str(self.leds[i]))
                 self.activeLeds.remove(self.leds[i][0])
                 debug("active LEDs left:"+str(self.activeLeds));
                 debug("sequence LEDs left:"+str(self.leds));

@@ -33,7 +33,7 @@ def resetArduino(port):
 def getID(ser):
     ans = chr(10)
     while ord(ans) > 9:
-        debug("trying to read ID")
+        log(Log.VERBOSE, "trying to read ID")
         msg = ""    
         bytes = []
         bytes.append(0xff)

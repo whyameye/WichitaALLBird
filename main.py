@@ -14,7 +14,7 @@ class Seq(object):
         self.leds = [] # list of LEDs we're currently controlling
         self.totalLeds = random.randrange(self.mode['minLength'],
                                           self.mode['maxLength']+1)
-        debug("total LEDs for new sequence: "+str(self.totalLeds))
+        log(Log.VERBOSE, "total LEDs for new sequence: "+str(self.totalLeds))
         self.currentLedIndex = 0 # number of active LEDs in mode
         self.direction = "" #
         
@@ -45,9 +45,9 @@ class Seq(object):
     def chooseLEDOnStrand(self, currentLED, currentStrand, strandToTry):
         if (random.random() > CHANCE_OF_PICKING_CLOSEST_Y):
             return [strandToTry, random.randrange(0,len(strands[strandToTry]["y"])), True]
-        debug("current Strand: "+str(currentStrand))
-        debug("current LED: "+str(currentLED))
-        debug("strand to Try: "+str(strandToTry))
+        log(Log.VERY_VERBOSE, "current Strand: "+str(currentStrand))
+        log(Log.VERY_VERBOSE, "current LED: "+str(currentLED))
+        log(Log.VERY_VERBOSE, "strand to Try: "+str(strandToTry))
         CurrentLEDPos = strands[currentStrand]["y"][currentLED[0][1]]
         PossibleLEDPoses = strands[strandToTry]["y"]
         distances = [abs(i - CurrentLEDPos) for i in PossibleLEDPoses]
@@ -56,7 +56,7 @@ class Seq(object):
     def getClosestYIndex(self, currentStrand, currentLEDIndex, nextStrand):
         currentY = strands[currentStrand]["y"][currentLEDIndex]
         deltaY = [abs(currentY - i) for i in strands[nextStrand]["y"]]
-        debug("deltaY Index: "+str(deltaY.index(min(deltaY))))
+        log(Log.VERY_VERBOSE, "deltaY Index: "+str(deltaY.index(min(deltaY))))
         return deltaY.index(min(deltaY))
     
     def getViableMove(self):
@@ -125,11 +125,11 @@ class Seq(object):
 
         if self.currentLedIndex == 0:
             currentLed = self.getStartLed() # list of 2 elements
-            debug("added first led: "+str(currentLed))
+            log(Log.VERBOSE, "added first led: "+str(currentLed))
             self.startTime = millis()
             self.currentLedIndex = 1
             self.activeLeds.append(currentLed) # all Leds active in all sequences
-            # debug("activeLEDs: "+str(self.activeLeds));
+            log(Log.VERY_VERBOSE, "activeLEDs: "+str(self.activeLeds));
             self.leds.append([currentLed, millis()]) # Leds active in this instance only
             return True
             
@@ -138,24 +138,24 @@ class Seq(object):
             (self.currentLedIndex >= self.totalLeds)):
             return False
         
-        debug("adding additional LED...")
+        log(Log.VERY_VERBOSE, "adding additional LED...")
         currentLed = self.getAdditionalLed()
         if currentLed == False:
-            debug("No viable moves. Stunt")
+            log(Log.VERY_VERBOSE, "No viable moves. Stunt")
             self.totalLeds = self.currentLedIndex
             return False
         
-        # debug("added additional led: "+str(currentLed))
+        # log(Log.VERY_VERBOSE, "added additional led: "+str(currentLed))
         if currentLed in self.activeLeds:
             if self.currentLedIndex == 0:
-                debug("1st LED already in list. Kill the sequence")
+                log(Log.VERY_VERBOSE, "1st LED already in list. Kill the sequence")
                 return False
             else:
-                debug("found LED already in another active sequence. Stunt")
+                log(Log.VERY_VERBOSE, "found LED already in another active sequence. Stunt")
                 self.totalLeds = self.currentLedIndex
                 return False
         self.activeLeds.append(currentLed) # all Leds active in all sequences
-        # debug("activeLEDs: "+str(self.activeLeds));
+        # log(Log.VERY_VERBOSE, "activeLEDs: "+str(self.activeLeds));
         self.leds.append([currentLed, millis()]) # Leds active in this instance only
         self.currentLedIndex += 1
 
@@ -187,9 +187,6 @@ class Seq(object):
         color = colorAndAmp[0]
         amp = colorAndAmp[1]
         addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp)
-        # debug("RGB: "+str(R)+" "+str(G)+" "+str(B))
-        # TODO: set strip color
-        # strip.setPixelColor(ledSequence[led[0]],Color(theColors[0],theColors[1],theColors[2]))
         led[0][2] = inPattern
         return inPattern
 
@@ -200,14 +197,14 @@ class Seq(object):
         self.addLed(self.leds)
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
-                debug("removing led: "+str(self.leds[i]))
+                log(Log.VERBOSE, "removing led: "+str(self.leds[i]))
                 self.activeLeds.remove(self.leds[i][0])
-                debug("active LEDs left:"+str(self.activeLeds));
-                debug("sequence LEDs left:"+str(self.leds));
+                log(Log.VERY_VERBOSE, "active LEDs left:"+str(self.activeLeds));
+                log(Log.VERY_VERBOSE, "sequence LEDs left:"+str(self.leds));
 
                 if (i == (self.totalLeds-1)): # we are rempving the last LED in the sequence
                     # assert(self.leds == [])
-                    debug("kill sequence...")
+                    log(Log.VERBOSE, "kill sequence...")
                     return False
         return True
 
@@ -282,7 +279,7 @@ def generateSequences(mode, newTrig):
     numOfSeqs = random.randrange(mode['minInstances'],mode['maxInstances']+1)
     while (len(allTheSeqs) < numOfSeqs) or (newTrig == True):
         newTrig = False
-        debug("generating parameters for seq #"+str(len(allTheSeqs)+1))
+        log(Log.VERBOSE, "generating parameters for seq #"+str(len(allTheSeqs)+1))
         allTheSeqs.append(Seq(mode))
 
 def updateMode():
@@ -319,7 +316,7 @@ if __name__ == '__main__':
         updateMode()
         for sequence in allTheSeqs: # allTheSeqs is a list of classes we will now traverse
             if not sequence.update(): # if sequence should die
-                debug("removing sequence")
+                log(Log.VERBOSE, "removing sequence")
                 sequence.remove() # LWT for the sequence. Probably unnecessary
                 allTheSeqs.remove(sequence) # remove from the list
                 del sequence # delete class in environment

@@ -25,14 +25,11 @@ def addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp)
     serverLedLists[serverToAssign].append([strandOnServer, numOnStrand, color, amp])
     
 def resetArduino(port):
-    # must call 2x for some unknown reason
     os.system("./dtr "+port)
-    time.sleep(2.25)
-    # os.system("./dtr "+port)
 
 def getID(ser):
-    ans = chr(10)
-    while ord(ans) > 9:
+    ans = 10
+    while ans > 9:
         log(Log.VERBOSE, "trying to read ID")
         msg = ""    
         bytes = []
@@ -44,7 +41,7 @@ def getID(ser):
         try: 
             ans = msg[0]
         except:
-            ans = chr(10)
+            ans = 10
             time.sleep(.5)
     return ans
 
@@ -53,17 +50,23 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
     open ports
     '''
     global serverIdToPortList
-    
+    serverIdToPortList = []
+
+    for i in range(numOfServers):
+        serverIdToPortList.append([])        
+
     if DRY_RUN:
-        resetArduino("/dev/ttyUSB0")
-        serverIdToPortList.append(serial.Serial("/dev/ttyUSB0", BAUDRATE))
-        for i in range(1,numOfServers):
-            serverIdToPortList.append(i)
-        return
-    
+        numOfServers = 1
+
     for i in range(numOfServers):
         resetArduino("/dev/ttyUSB"+str(i))
-        serverIdToPortList.append(serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE))
+    time.sleep(2.25)
+    
+    for i in range(numOfServers):
+        ser = serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE)
+        serverID = getID(ser)
+        log(Log.INFO, "ID: %d Serial /dev/ttyUSB%d" %(serverID, i))
+        serverIdToPortList[serverID] = ser
 
 def setLED(ser, strand, numOnStrand, color, amplitude):
     bytes = []

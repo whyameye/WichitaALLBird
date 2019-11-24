@@ -28,7 +28,8 @@ def addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp)
 def resetArduino(port):
     # must call 2x for some unknown reason
     os.system("./dtr "+port)
-    os.system("./dtr "+port)
+    time.sleep(2.25)
+    # os.system("./dtr "+port)
 
 def getID(ser):
     ans = chr(10)

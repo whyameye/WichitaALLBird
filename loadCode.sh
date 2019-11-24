@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ "X$1" = "X" ] || [ "X$2" = "X" ]; then
-    echo "Usage: $0 port filename"
+    echo "Usage: $0 port# filename"
     exit 0
 fi
 if [ ! -f $2 ]; then

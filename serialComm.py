@@ -1,4 +1,4 @@
-import serial, threading, time, os
+import serial, threading, time, os, json
 from common import *
 
 serverIdToPortList = []
@@ -52,23 +52,40 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
     '''
     global serverIdToPortList
     serverIdToPortList = []
+    portToID = []
 
     for i in range(numOfServers):
         serverIdToPortList.append([])        
-
+        
     if DRY_RUN:
         numOfServers = 1
 
     for i in range(numOfServers):
         resetArduino("/dev/ttyUSB"+str(i))
-    time.sleep(2.25)
-    
+    time.sleep(2.25) # servers are in program mode for 2 seconds after reset
+
+    try:
+        with open('/tmp/portToID.json', 'r') as json_file:
+            portToID = json.load(json_file)
+            log(Log.INFO, "Loading prexisting ID <--> Port map file")
+    except:
+        for i in range(numOfServers):
+            log(Log.INFO, "No ID <--> Port map file found or corrupt. Generating.")
+            ser = serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE)
+            serverID = getID(ser)
+            log(Log.INFO, "ID: %d Serial /dev/ttyUSB%d" %(serverID, i))
+            serverIdToPortList[serverID] = ser
+            portToID.append(serverID)
+        with open('/tmp/portToID.json', 'w') as outfile:
+                json.dump(portToID, outfile)
+        return
+        
     for i in range(numOfServers):
         ser = serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE)
-        serverID = getID(ser)
+        serverID = portToID[i]
         log(Log.INFO, "ID: %d Serial /dev/ttyUSB%d" %(serverID, i))
         serverIdToPortList[serverID] = ser
-
+    
 def setLED(ser, strand, numOnStrand, color, amplitude):
     bytes = []
     bytes.append((strand << 3) + numOnStrand)

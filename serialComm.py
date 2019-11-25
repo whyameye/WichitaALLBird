@@ -67,6 +67,8 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
     try:
         with open('/tmp/portToID.json', 'r') as json_file:
             portToID = json.load(json_file)
+            if len(portToID) != numOfServers:
+                raise
             log(Log.INFO, "Loading prexisting ID <--> Port map file")
     except:
         for i in range(numOfServers):

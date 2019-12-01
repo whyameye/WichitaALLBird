@@ -32,8 +32,42 @@
 	- 'broken': 5
 
 ## Hardware
-- 10 Arduinos (aka Servers) numbered 0 through 9
+- 9 Arduinos (aka Servers) numbered 0 through 8
+- (Arduino 9 does not exist and represent unassigned/broken strands)
 - up to 18 strands on an Arduino numbered 0 through 17
+
+## Colors
+ - 0 Red
+ - 30 Orange
+ - 45 Yellow
+ - 66 Yellow Green
+ - 86 Green
+ - 116 Aqua
+ - 128 light blue
+ - 166 deep blue
+ - 218 Purple
+ 
+## Modes
+### 0
+ - this is the default mode: no sensor motion detected for TRIGGER_LENGTH seconds
+### 1
+
+### 2
+
+### 3
+
+### 4
+
+### 5
+
+### 6
+ 
+### 7
+
+## Mode Info:
+- changeMove: likelihood that move will *not* change.
+    - 1 means it will not change unless it has to.
+    - 0 means it will always change for each additional LED added
 
 ## Data
 ### Variables

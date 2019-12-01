@@ -64,10 +64,28 @@
  
 ### 7
 
+## Sending/receiving from sensors
+ - sensors are numbered 1-7
+ - sensors send to redis server running on main (bird) computer
+ - sensors also receive from redis server for calibration settings
+ - redis server is password protected
+ - messaage from sensor example:
+      - key:`from/<sensor #>` value:`{"activity":<T/F>,"areas":[size1,size2,size3], "delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>}
+ - message to sensor example:
+       - key:`to/<sensor #>` value:`{"delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>}`
 ## Mode Info:
 - changeMove: likelihood that move will *not* change.
     - 1 means it will not change unless it has to.
     - 0 means it will always change for each additional LED added
+    - 0.5 means it has 50% chance of changing
+- startDirection: list of one or more moves to start
+-moves allowed
+ - up
+ - down
+ - left
+ - right
+ - inner (move to inner ring)
+ - outer (move to outer ring)
 
 ## Data
 ### Variables

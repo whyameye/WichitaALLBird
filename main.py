@@ -3,6 +3,7 @@
 import json, time, random, sys
 from serialComm import *
 from common import *
+import redis
 
 CHANCE_OF_PICKING_CLOSEST_Y = 0.8
 TRIGGER_LENGTH = 5000 # milliseconds before returning to mode 0
@@ -282,12 +283,26 @@ def generateSequences(mode, newTrig):
         log(Log.VERBOSE, "generating parameters for seq #"+str(len(allTheSeqs)+1))
         allTheSeqs.append(Seq(mode))
 
-def updateMode(modeIndex):
-    newIndex = getInput()
-    if newIndex:
-        return int(newIndex[0])
-    return modeIndex
-
+def updateMode(modeIndex, trigTime):
+    if env.MODE_FROM_KEYBOARD:
+        newIndex = getInput()
+        if newIndex:
+            trigTime = millis()
+            return [int(newIndex[0]), trigTime]
+        return [modeIndex, trigTime]
+    
+    for i in range(1,8):
+        strFromSensor = r.get("from/"+str(i))
+        if strFromSensor != None:
+            try:
+                activity = json.loads(strFromSensor)["activity"]
+                if activity == True:
+                    trigTime = millis()
+                    return [i, trigTime]
+            except:
+                pass
+    return [modeIndex, trigTime]
+    
 # Main program logic:
 if __name__ == '__main__':
 
@@ -304,14 +319,15 @@ if __name__ == '__main__':
 
     begin() # initialize serial communication
     trigTime = millis()
-
+    r = redis.StrictRedis(host='localhost', port=6379, db=0,
+                          password=env.redisPassword,
+                          charset="utf-8",decode_responses=True)
     # loop
     while True:
-        # modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
-        modeIndex = updateMode(modeIndex)
+        modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
+        modeIndex, trigTime = updateMode(modeIndex, trigTime)
         if lastModeIndex != modeIndex: # new mode triggered
             log(Log.INFO, "NEW MODE: %d" %(modeIndex))
-            trigTime = millis()
             generateSequences(modes[modeIndex], True)
             lastModeIndex = modeIndex
         initializeServerLedLists()

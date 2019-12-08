@@ -2,8 +2,8 @@
   "0":{
     "minInstances":3,
     "maxInstances":6,
-    "minLength":3,
-    "maxLength":6,
+    "minLength":16,
+    "maxLength":32,
     "moves":{
       "startDirection": ["inner"],
       "startRings": [1,2],

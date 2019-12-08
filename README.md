@@ -70,7 +70,7 @@
  - sensors also receive from redis server for calibration settings
  - redis server is password protected
  - messaage from sensor example:
-      - key:`from/<sensor #>` value:`{"activity":<T/F>,"areas":[size1,size2,size3], "delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>}
+      - key:`from/<sensor #>` value:`{"activity":<T/F>,"areas":[size1,size2,size3], "delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>, ip: <ip address>}
  - message to sensor example:
        - key:`to/<sensor #>` value:`{"delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>}`
 ## Mode Info:

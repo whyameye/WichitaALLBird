@@ -57,7 +57,7 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
     for i in range(numOfServers):
         serverIdToPortList.append([])        
         
-    if DRY_RUN:
+    if env.DRY_RUN:
         numOfServers = 1
 
     for i in range(numOfServers):
@@ -107,7 +107,7 @@ def sendToServer(serverID):
         color = i[2]
         amp = i[3]
         time.sleep(.0006)
-        if DRY_RUN:
+        if env.DRY_RUN:
             if serverID == 0:
                 # import pdb; pdb.set_trace()
                 # print("ServerID: %d, strandOnServer: %d, numOnStrand: %d, color: %d, amp: %d"  %(serverID, strandOnServer, numOnStrand, color, amp))

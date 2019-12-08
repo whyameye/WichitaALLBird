@@ -1,5 +1,5 @@
 from enum import Enum
-import time, sys, select
+import time, sys, select, env
 
 class Log(Enum):
     VERY_VERBOSE = 1
@@ -10,7 +10,6 @@ class Log(Enum):
 LOG_LEVEL = Log.VERBOSE
 
 NUMBER_OF_SERVERS = 9
-DRY_RUN = False
 
 def log(level, msg):
     if level.value >= LOG_LEVEL.value:

@@ -1,7 +1,16 @@
+from enum import Enum
 import time, sys, select, env
 
-
 NUMBER_OF_SERVERS = 9
+
+class Log(Enum):
+    VERY_VERBOSE = 1
+    VERBOSE = 2
+    INFO = 3
+    WARNING = 4
+    ERROR = 5
+
+LOG_LEVEL = Log.INFO
 
 def log(level, msg):
     if level.value >= LOG_LEVEL.value:

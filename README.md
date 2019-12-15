@@ -8,6 +8,11 @@
 	run tests.py
 	choosePort() # getting deprecated
 ```
+## Server (Arduino) Stuff
+### Uploading
+ - compile (verify)
+ - use `loadCode.sh` and `loadAllCode.sh` in this repo
+ 
 ## Definitions
 `WichitaALLStrands.json` is a key:value setup
 
@@ -27,14 +32,75 @@
 	- 'broken': 5
 
 ## Hardware
-- 10 Arduinos (aka Servers) numbered 0 through 9
+- 9 Arduinos (aka Servers) numbered 0 through 8
+- (Arduino 9 does not exist and represent unassigned/broken strands)
 - up to 18 strands on an Arduino numbered 0 through 17
+
+## Colors
+ - 0 Red
+ - 30 Orange
+ - 45 Yellow
+ - 66 Yellow Green
+ - 86 Green
+ - 116 Aqua
+ - 128 light blue
+ - 166 deep blue
+ - 218 Purple
+ 
+## Modes
+### 0
+ - this is the default mode: no sensor motion detected for TRIGGER_LENGTH seconds
+### 1
+
+### 2
+
+### 3
+
+### 4
+
+### 5
+
+### 6
+ 
+### 7
+
+## Sending/receiving from sensors
+ - sensors are numbered 1-7
+ - sensors send to redis server running on main (bird) computer
+ - sensors also receive from redis server for calibration settings
+ - redis server is password protected
+ - messaage from sensor example:
+      - key:`from/<sensor #>` value:`{"activity":<T/F>,"areas":[size1,size2,size3], "delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>, ip: <ip address>}
+ - message to sensor example:
+       - key:`to/<sensor #>` value:`{"delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>}`
+### Parameters that can be changed by the main computer:
+ - min_motion: # of frames of motion before setting motion to be true (higher = less sensitive)
+ - delta_thresh: sensitivity of the pixels (higher = less sensitive)
+ - min_area: size of area for motion. Measured in pixels (higher = less sensitive)
+## Mode Info:
+- changeMove: likelihood that move will *not* change.
+    - 1 means it will not change unless it has to.
+    - 0 means it will always change for each additional LED added
+    - 0.5 means it has 50% chance of changing
+- startDirection: list of one or more moves to start
+-moves allowed
+ - up
+ - down
+ - left
+ - right
+ - inner (move to inner ring)
+ - outer (move to outer ring)
 
 ## Data
 ### Variables
- - active LED is a list of 3: [strand, index of Y element in strand, T/F active]
-  - LEDs in sequence include time: [[strand, index of Y element in strand, T/F active], abs time]
-
+ - active LED is a list of 3: [strand #, index of Y element in strand, T/F active]
+  - LEDs in sequence include time: [[strand #, index of Y element in strand, T/F active], abs time]
+ - serverLedLists is an array of arrays with each index to the parent array representing a server ID
+    - The child arrays are lists of LEDs to change of the form [<strand #>, <numOnStrand>, <color>, <amplitude>]
+    - strand #: uint8
+    - numOnStrand: uint8
+    - color: uint8
+    - amplitude: uint8
 ### Sending colors to LEDS
 - open serial ports in main thread
 - spin off threads, one for each port, and send LEDs

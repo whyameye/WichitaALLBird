@@ -1,15 +1,37 @@
-import serial, threading, time
+import serial, threading, time, os, json
+from common import *
 
-serverIdPortDict = {}
-colorAndAmp = []
-ports = []
-BAUDRATE = 2000000
+serverIdToPortList = []
+BAUDRATE = 115200
 serverThreads = []
+serverLedLists=[]
+
+
+def initializeServerLedLists():
+    """serverLedLists is an array of arrays with each index to the parent array representing a server ID
+    The child arrays are lists of LEDs to change of the form [<strand>, <numOnStrand>, <color>, <amplitude>]
+    strand: json of entire description of strand
+    numOnStrand: uint8
+    color: uint8
+    amplitude: uint8
+    """
+    global serverLedLists
+    
+    serverLedLists = []
+    for i in range(NUMBER_OF_SERVERS):
+        serverLedLists.append([])
+
+def addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp):
+    if serverToAssign <= (NUMBER_OF_SERVERS - 1):
+        serverLedLists[serverToAssign].append([strandOnServer, numOnStrand, color, amp])
+    
+def resetArduino(port):
+    os.system("./dtr "+port)
 
 def getID(ser):
     ans = 10
     while ans > 9:
-        debug("trying to read ID")
+        log(Log.VERBOSE, "trying to read ID")
         msg = ""    
         bytes = []
         bytes.append(0xff)
@@ -24,26 +46,48 @@ def getID(ser):
             time.sleep(.5)
     return ans
 
-def begin():
+def begin(numOfServers = NUMBER_OF_SERVERS):
     '''create arduinoID -> port dictionary
     open ports
     '''
-    global serverIdPortDict
-    
-    for i in range(NUMBER_OF_SERVERS):
-        ports.append(Serial.serial("/dev/ttyUSB"+i, BAUDRATE))
-        serverIdPortDict[getID(ports[i])] = i
+    global serverIdToPortList
+    serverIdToPortList = []
+    portToID = []
 
-def eraseColorAndAmp():
-    global colorAndAmp
-
-    colorAndAmp = []
-    for i in range(NUMBER_OF_SERVERS):
-        colorAndAmp.append([])
+    for i in range(numOfServers):
+        serverIdToPortList.append([])        
         
-def addToServer(strand, numOnStrand, colorAndAmp):
-    colorAndAmp[strand["arduinoID"]].append([strand, numOnStrand, colorAndAmp[0], colorAndAmp[1]])
+    if env.DRY_RUN:
+        numOfServers = 1
 
+    for i in range(numOfServers):
+        resetArduino("/dev/ttyUSB"+str(i))
+    time.sleep(2.25) # servers are in program mode for 2 seconds after reset
+
+    try:
+        with open('/tmp/portToID.json', 'r') as json_file:
+            portToID = json.load(json_file)
+            if len(portToID) != numOfServers:
+                raise
+            log(Log.INFO, "Loading prexisting ID <--> Port map file")
+    except:
+        for i in range(numOfServers):
+            log(Log.INFO, "No ID <--> Port map file found or corrupt. Generating.")
+            ser = serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE)
+            serverID = getID(ser)
+            log(Log.INFO, "ID: %d Serial /dev/ttyUSB%d" %(serverID, i))
+            serverIdToPortList[serverID] = ser
+            portToID.append(serverID)
+        with open('/tmp/portToID.json', 'w') as outfile:
+                json.dump(portToID, outfile)
+        return
+        
+    for i in range(numOfServers):
+        ser = serial.Serial("/dev/ttyUSB"+str(i), BAUDRATE)
+        serverID = portToID[i]
+        log(Log.INFO, "ID: %d Serial /dev/ttyUSB%d" %(serverID, i))
+        serverIdToPortList[serverID] = ser
+    
 def setLED(ser, strand, numOnStrand, color, amplitude):
     bytes = []
     bytes.append((strand << 3) + numOnStrand)
@@ -53,22 +97,33 @@ def setLED(ser, strand, numOnStrand, color, amplitude):
     ser.write(serial.to_bytes(bytes))
 
 def sendToServer(serverID):
-    port = serverIdPortDict[serverID]
-    for i in range(colorAndAmp[serverID]):
-        strandOnServer = colorAndAmp[serverID][i][0]["strandOnArduino"]
-        numOnStrand = colorAndAmp[serverID][i][1]
-        color = colorAndAmp[serverID][i][2]
-        amp = colorAndAmp[serverID][i][3]
-        setLED(port, strandOnServer, numOnStrand, color, amp)
-        
-def sendToServers(firstTime):
+    port = serverIdToPortList[serverID]
+    # import pdb; pdb.set_trace()
+    if serverLedLists[serverID] == []:
+        serverLedLists[serverID].append([31, 0, 0, 0]) # 31 is a nonexistent strand on all servers
+    for i in serverLedLists[serverID]:
+        strandOnServer = i[0]
+        numOnStrand = i[1]
+        color = i[2]
+        amp = i[3]
+        time.sleep(.0006)
+        if env.DRY_RUN:
+            if serverID == 0:
+                # import pdb; pdb.set_trace()
+                # print("ServerID: %d, strandOnServer: %d, numOnStrand: %d, color: %d, amp: %d"  %(serverID, strandOnServer, numOnStrand, color, amp))
+                setLED(port, strandOnServer, numOnStrand, color, amp)
+        else:
+            setLED(port, strandOnServer, numOnStrand, color, amp)
+            
+
+def sendToServers():
     global serverThreads
     
-    if not(firstTime):
+    if serverThreads != []:
         for i in range(NUMBER_OF_SERVERS):
             serverThreads[i].join()
 
     serverThreads = []
     for i in range(NUMBER_OF_SERVERS):
-        serverThreads.append(threading.Thread(targe=sendToServer, args(i), daemon=True)
-    
+        serverThreads.append(threading.Thread(target=sendToServer, args=([i]), daemon=True))
+        serverThreads[i].start()

@@ -1,20 +1,21 @@
+#!/usr/bin/python3
+
 import json, time, random, sys
-import serialComm
+from serialComm import *
+from common import *
+import redis
 
-DEBUG = True
 CHANCE_OF_PICKING_CLOSEST_Y = 0.8
-NUMBER_OF_SERVERS = 10
-
+TRIGGER_LENGTH = 5000 # milliseconds before returning to mode 0
 class Seq(object):
     activeLeds = []
     
     def __init__(self, mode):
         self.mode = mode
-        self.startTime = millis()
         self.leds = [] # list of LEDs we're currently controlling
         self.totalLeds = random.randrange(self.mode['minLength'],
                                           self.mode['maxLength']+1)
-        debug("total LEDs for new sequence: "+str(self.totalLeds))
+        log(Log.VERBOSE, "total LEDs for new sequence: "+str(self.totalLeds))
         self.currentLedIndex = 0 # number of active LEDs in mode
         self.direction = "" #
         
@@ -45,9 +46,9 @@ class Seq(object):
     def chooseLEDOnStrand(self, currentLED, currentStrand, strandToTry):
         if (random.random() > CHANCE_OF_PICKING_CLOSEST_Y):
             return [strandToTry, random.randrange(0,len(strands[strandToTry]["y"])), True]
-        print("current Strand: "+str(currentStrand))
-        print("current LED: "+str(currentLED))
-        print("strand to Try: "+str(strandToTry))
+        log(Log.VERY_VERBOSE, "current Strand: "+str(currentStrand))
+        log(Log.VERY_VERBOSE, "current LED: "+str(currentLED))
+        log(Log.VERY_VERBOSE, "strand to Try: "+str(strandToTry))
         CurrentLEDPos = strands[currentStrand]["y"][currentLED[0][1]]
         PossibleLEDPoses = strands[strandToTry]["y"]
         distances = [abs(i - CurrentLEDPos) for i in PossibleLEDPoses]
@@ -56,7 +57,7 @@ class Seq(object):
     def getClosestYIndex(self, currentStrand, currentLEDIndex, nextStrand):
         currentY = strands[currentStrand]["y"][currentLEDIndex]
         deltaY = [abs(currentY - i) for i in strands[nextStrand]["y"]]
-        print("deltaY Index: "+str(deltaY.index(min(deltaY))))
+        log(Log.VERY_VERBOSE, "deltaY Index: "+str(deltaY.index(min(deltaY))))
         return deltaY.index(min(deltaY))
     
     def getViableMove(self):
@@ -122,33 +123,40 @@ class Seq(object):
         """add first or next LED in sequence
         returns True if LED was successfully added, otherwise False
         """
-        deltaTime = millis() - self.startTime
+
+        if self.currentLedIndex == 0:
+            currentLed = self.getStartLed() # list of 2 elements
+            log(Log.VERBOSE, "added first led: "+str(currentLed))
+            self.startTime = millis()
+            self.currentLedIndex = 1
+            self.activeLeds.append(currentLed) # all Leds active in all sequences
+            log(Log.VERY_VERBOSE, "activeLEDs: "+str(self.activeLeds));
+            self.leds.append([currentLed, millis()]) # Leds active in this instance only
+            return True
+            
+        deltaTime = millis() - self.startTime        
         if ((deltaTime < (self.currentLedIndex * self.mode['timeToNextLed'])) or
             (self.currentLedIndex >= self.totalLeds)):
             return False
         
-        if self.currentLedIndex == 0:
-            currentLed = self.getStartLed() # list of 2 elements
-            debug("added first led: "+str(currentLed))
-
-        else:
-            debug("adding additional LED...")
-            currentLed = self.getAdditionalLed()
-            if currentLed == False:
-                debug("No viable moves. Stunt")
-                self.totalLeds = self.currentLedIndex
-                return False
-            debug("added additional led: "+str(currentLed))
+        log(Log.VERY_VERBOSE, "adding additional LED...")
+        currentLed = self.getAdditionalLed()
+        if currentLed == False:
+            log(Log.VERY_VERBOSE, "No viable moves. Stunt")
+            self.totalLeds = self.currentLedIndex
+            return False
+        
+        # log(Log.VERY_VERBOSE, "added additional led: "+str(currentLed))
         if currentLed in self.activeLeds:
             if self.currentLedIndex == 0:
-                debug("1st LED already in list. Kill the sequence")
+                log(Log.VERY_VERBOSE, "1st LED already in list. Kill the sequence")
                 return False
             else:
-                debug("found LED already in another active sequence. Stunt")
+                log(Log.VERY_VERBOSE, "found LED already in another active sequence. Stunt")
                 self.totalLeds = self.currentLedIndex
                 return False
         self.activeLeds.append(currentLed) # all Leds active in all sequences
-        debug("activeLEDs: "+str(self.activeLeds));
+        # log(Log.VERY_VERBOSE, "activeLEDs: "+str(self.activeLeds));
         self.leds.append([currentLed, millis()]) # Leds active in this instance only
         self.currentLedIndex += 1
 
@@ -170,13 +178,16 @@ class Seq(object):
                 tTime = 0.0 + ledPatterns[j][2] - ledPatterns[j-1][2]
                 for k in range(2):
                     diffColorOrAmp = ledPatterns[j][k] - ledPatterns[j-1][k]
-                    colorAndAmp[k]=int(round(ddTime*(diffColororAmp/tTime)+ledPatterns[j-1][k]))
+                    colorAndAmp[k]=int(round(ddTime*(diffColorOrAmp/tTime)+ledPatterns[j-1][k]))
                 inPattern = True
                 break;
-            
-        # debug("RGB: "+str(R)+" "+str(G)+" "+str(B))
-        # TODO: set strip color
-        # strip.setPixelColor(ledSequence[led[0]],Color(theColors[0],theColors[1],theColors[2]))
+        strand = strands[led[0][0]]
+        serverToAssign = strand["arduinoID"]
+        strandOnServer = strand["strandOnArduino"]
+        numOnStrand = led[0][1]
+        color = colorAndAmp[0]
+        amp = colorAndAmp[1]
+        addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp)
         led[0][2] = inPattern
         return inPattern
 
@@ -187,14 +198,14 @@ class Seq(object):
         self.addLed(self.leds)
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
-                debug("removing led: "+str(self.leds[i][0]))
+                log(Log.VERBOSE, "removing led: "+str(self.leds[i]))
                 self.activeLeds.remove(self.leds[i][0])
-                debug("active LEDs left:"+str(self.activeLeds));
-                debug("sequence LEDs left:"+str(self.leds));
+                log(Log.VERY_VERBOSE, "active LEDs left:"+str(self.activeLeds));
+                log(Log.VERY_VERBOSE, "sequence LEDs left:"+str(self.leds));
 
                 if (i == (self.totalLeds-1)): # we are rempving the last LED in the sequence
                     # assert(self.leds == [])
-                    debug("kill sequence...")
+                    log(Log.VERBOSE, "kill sequence...")
                     return False
         return True
 
@@ -209,10 +220,6 @@ def loadJSON(filename):
     jsonResult = json.loads(f.read())
     f.close()
     return jsonResult
-
-def debug(str):
-    if DEBUG:
-        print("DEBUG: "+str)
 
 def millis():
     return int(round(time.time() * 1000))
@@ -242,19 +249,6 @@ def addInniesAndOuties():
             strands[strandInOuterRing]["inner"]=closestInner
             strands[closestInner]["outer"]=strandInOuterRing
 
-def initializeServerLedLists():
-    global serverLedLists
-    
-    serverLedLists = []
-    for i in range(NUMBER_OF_SERVERS):
-        serverLedLists.append([])
-
-def sendLedListsToServers():
-    '''TODO
-    join all the old processes if they exist (they won't first time around
-    spin out new processes
-    '''
-    pass
 
 def loadGlobalVariables():
     """create list of integers representing strand #s depending on what ring and group they are in
@@ -286,50 +280,65 @@ def generateSequences(mode, newTrig):
     numOfSeqs = random.randrange(mode['minInstances'],mode['maxInstances']+1)
     while (len(allTheSeqs) < numOfSeqs) or (newTrig == True):
         newTrig = False
-        debug("generating parameters for seq #"+str(len(allTheSeqs)+1))
+        log(Log.VERBOSE, "generating parameters for seq #"+str(len(allTheSeqs)+1))
         allTheSeqs.append(Seq(mode))
 
-def updateMode():
-    pass
-
+def updateMode(modeIndex, trigTime):
+    if env.MODE_FROM_KEYBOARD:
+        newIndex = getInput()
+        if newIndex:
+            trigTime = millis()
+            return [int(newIndex[0]), trigTime]
+        return [modeIndex, trigTime]
+    
+    for i in range(1,8):
+        strFromSensor = r.get("from/"+str(i))
+        if strFromSensor != None:
+            try:
+                activity = json.loads(strFromSensor)["activity"]
+                if activity == True:
+                    trigTime = millis()
+                    return [i, trigTime]
+            except:
+                pass
+    return [modeIndex, trigTime]
+    
 # Main program logic:
 if __name__ == '__main__':
 
     # setup
     allTheSeqs = []
-    newTrig = False
     modes = {}
     strands = {}
     strandsInRing = []
     strandsInGroup = []
-    serverLedLists=[]
-    mode = 0
+    lastModeIndex = 99 # trigger generation since lastMode != mode
+    modeIndex = 0
     loadGlobalVariables()
     addInniesAndOuties()
 
-    # start in Mode 0
-    generateSequences(modes[mode], newTrig)
-    trigTime = 0
-
+    begin() # initialize serial communication
+    trigTime = millis()
+    r = redis.StrictRedis(host='localhost', port=6379, db=0,
+                          password=env.redisPassword,
+                          charset="utf-8",decode_responses=True)
     # loop
     while True:
-        # TODO the entire below block is for new modes placeholder for now
-        if False: # this is where a new mode would be triggered
-            print("NEW MODE")
-            newTrig = True # force new sequence to start
-            mode = 0 # should be new mode
-            trigTime = millis()
+        modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
+        modeIndex, trigTime = updateMode(modeIndex, trigTime)
+        if lastModeIndex != modeIndex: # new mode triggered
+            log(Log.INFO, "NEW MODE: %d" %(modeIndex))
+            generateSequences(modes[modeIndex], True)
+            lastModeIndex = modeIndex
         initializeServerLedLists()
-        updateMode()
         for sequence in allTheSeqs: # allTheSeqs is a list of classes we will now traverse
             if not sequence.update(): # if sequence should die
-                debug("removing sequence")
+                log(Log.VERBOSE, "removing sequence")
                 sequence.remove() # LWT for the sequence. Probably unnecessary
                 allTheSeqs.remove(sequence) # remove from the list
                 del sequence # delete class in environment
-                # mode = ((millis() - trigTime) < TRIGGER_LENGTH) TODO return to default mode after time period
-                generateSequences(modes[mode], newTrig)
-        sendLedListsToServers()
-        time.sleep(.001)
+                generateSequences(modes[modeIndex], False)
+        sendToServers()
+        time.sleep(.01)
         # strip.show()
 

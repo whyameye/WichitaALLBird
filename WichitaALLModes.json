@@ -44,33 +44,33 @@
      [126,64, 500],
      [0,0,1000]]},
   "2":{
-    "minInstances":30,
-    "maxInstances":45,
+    "minInstances":25,
+    "maxInstances":40,
     "minLength":4,
-    "maxLength":10,
+    "maxLength":16,
     "moves":{
-      "startDirection": ["down"],
+      "startDirection": ["left"],
       "startRings": [1,2,3],
-      "startGroups": [1,2,3],
+      "startGroups": [2],
       "changeMove": 1.0,
-      "movesAllowed": ["down"],
+      "movesAllowed": ["left"],
       "moveOutsideGroup": "Y",
-      "moveOutsideRing": "Y"
+      "moveOutsideRing": "N"
     },
     "timeToNextLed":100,
     "ledPattern":
-    [[64,0,0],
-     [128,128, 1400],
-     [64,0,4000]]},
+    [[20,0,0],
+     [30,128, 500],
+     [20,0,1000]]},
   "3":{
-    "minInstances":1,
-    "maxInstances":1,
-    "minLength":64,
-    "maxLength":128,
+    "minInstances":10,
+    "maxInstances":20,
+    "minLength":10,
+    "maxLength":20,
     "moves":{
       "startDirection": ["left","right","up","down","inner","outer"],
       "startRings": [1,2,3],
-      "startGroups": [1,2,3],
+      "startGroups": [1,3],
       "changeMove": 0.0,
       "movesAllowed": ["left","right","up","down","inner","outer"],
       "moveOutsideGroup": "Y",
@@ -78,11 +78,11 @@
     },
     "timeToNextLed":100,
     "ledPattern":
-    [[86,0,0],
-     [218,32, 1000],
-     [218,127, 5000],
-     [240,64,8000],
-     [0,0,10000]]},
+    [[160,0,0],
+     [170,32, 1000],
+     [170,127, 5000],
+     [160,64,8000],
+     [160,0,10000]]},
   "4":{
     "minInstances":3,
     "maxInstances":6,
@@ -102,5 +102,67 @@
     [[116,0,0],
      [116,127, 1000],
      [116,64,8000],
-     [116,0,10000]]}
+     [116,0,10000]]},
+    "5":{
+    "minInstances":25,
+    "maxInstances":25,
+    "minLength":50,
+    "maxLength":100,
+    "moves":{
+      "startDirection": ["left"],
+      "startRings": [1,2,3],
+      "startGroups": [1],
+      "changeMove": 1,
+      "movesAllowed": ["left"],
+      "moveOutsideGroup": "Y",
+      "moveOutsideRing": "Y"
+    },
+    "timeToNextLed":250,
+    "ledPattern":
+    [[100,0,0],
+     [110,127, 100],
+     [120,127, 500],
+     [130,127, 800],
+     [100,0,1000]]},
+  "6":{
+    "minInstances":25,
+    "maxInstances":25,
+    "minLength":50,
+    "maxLength":100,
+    "moves":{
+      "startDirection": ["right"],
+      "startRings": [1,2,3],
+      "startGroups": [3],
+      "changeMove": 1,
+      "movesAllowed": ["right"],
+      "moveOutsideGroup": "Y",
+      "moveOutsideRing": "Y"
+    },
+    "timeToNextLed":250,
+    "ledPattern":
+    [[0,0,0],
+     [10,127, 100],
+     [20,127, 500],
+     [30,127, 800],
+     [0,0,1000]]},
+  "7":{
+    "minInstances":50,
+    "maxInstances":50,
+    "minLength":2,
+    "maxLength":3,
+    "moves":{
+      "startDirection": ["right"],
+      "startRings": [1,2,3],
+      "startGroups": [1,2,3],
+      "changeMove": 0,
+      "movesAllowed": ["right"],
+      "moveOutsideGroup": "Y",
+      "moveOutsideRing": "Y"
+    },
+    "timeToNextLed":100,
+    "ledPattern":
+    [[200,0,0],
+     [200,127, 50],
+     [200,0,100]]}
+
 }

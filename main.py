@@ -6,7 +6,6 @@ from common import *
 import redis
 
 CHANCE_OF_PICKING_CLOSEST_Y = 0.8
-TRIGGER_LENGTH = 5000 # milliseconds before returning to mode 0
 class Seq(object):
     activeLeds = []
     
@@ -288,19 +287,21 @@ def updateMode(modeIndex, trigTime):
         newIndex = getInput()
         if newIndex:
             trigTime = millis()
-            return [int(newIndex[0]), trigTime]
-        return [modeIndex, trigTime]
-    
-    for i in range(1,8):
-        strFromSensor = r.get("from/"+str(i))
-        if strFromSensor != None:
-            try:
-                activity = json.loads(strFromSensor)["activity"]
-                if activity == True:
-                    trigTime = millis()
-                    return [i, trigTime]
-            except:
-                pass
+            modeIndex = int(newIndex[0])
+
+    if env.TEST_SENSORS or not env.MODE_FROM_KEYBOARD:
+        for i in range(1,8):
+            strFromSensor = r.get("from/"+str(i))
+            if strFromSensor != None:
+                try:
+                    activity = json.loads(strFromSensor)["activity"]
+                    if activity == True:
+                        log(Log.INFO,"Sensor "+str(i)+" activated")
+                        if not env.MODE_FROM_KEYBOARD:
+                            trigTime = millis()
+                            modeIndex = i
+                except:
+                    pass
     return [modeIndex, trigTime]
     
 # Main program logic:
@@ -319,12 +320,12 @@ if __name__ == '__main__':
 
     begin() # initialize serial communication
     trigTime = millis()
-    r = redis.StrictRedis(host='localhost', port=6379, db=0,
+    r = redis.StrictRedis(host='localhost', port=6379, db=1,
                           password=env.redisPassword,
                           charset="utf-8",decode_responses=True)
     # loop
     while True:
-        modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
+        modeIndex = 0 if ((millis() - trigTime) > env.TRIGGER_LENGTH) else modeIndex
         modeIndex, trigTime = updateMode(modeIndex, trigTime)
         if lastModeIndex != modeIndex: # new mode triggered
             log(Log.INFO, "NEW MODE: %d" %(modeIndex))

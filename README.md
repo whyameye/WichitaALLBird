@@ -73,6 +73,10 @@
       - key:`from/<sensor #>` value:`{"activity":<T/F>,"areas":[size1,size2,size3], "delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>, ip: <ip address>}
  - message to sensor example:
        - key:`to/<sensor #>` value:`{"delta_thresh": 0 to 255, "min_motion:" <# of frames w motion>, min_area: <int x*y>}`
+### Parameters that can be changed by the main computer:
+ - min_motion: # of frames of motion before setting motion to be true (higher = less sensitive)
+ - delta_thresh: sensitivity of the pixels (higher = less sensitive)
+ - min_area: size of area for motion. Measured in pixels (higher = less sensitive)
 ## Mode Info:
 - changeMove: likelihood that move will *not* change.
     - 1 means it will not change unless it has to.

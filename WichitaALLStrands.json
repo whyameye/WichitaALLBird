@@ -1836,5 +1836,65 @@
     "x":17.25 ,
     "z":3.25,
     "y":[4,13]
+  },
+    "153": {
+   "status":"dark birds",
+   "arduinoID": 2,
+   "strandOnArduino":8,
+    "ring": [3],
+    "group": [2],
+    "left": [118],
+    "right": [154],
+    "x":10.2,
+    "z":5.85,
+    "y":[0]
+  },
+"154": {
+   "status":"active",
+   "arduinoID": 2,
+   "strandOnArduino":10,
+    "ring": [3],
+    "group": [2],
+    "left": [153],
+    "right": [155],
+    "x":9.85,
+    "z":4.75,
+    "y":[5,14]
+  },
+"155": {
+   "status":"active",
+   "arduinoID": 2,
+   "strandOnArduino":11,
+    "ring": [3],
+    "group": [2],
+    "left": [154],
+    "right": [156],
+    "x":9.66 ,
+    "z":4,
+    "y":[6,19]
+  },
+"156": {
+   "status":"active",
+   "arduinoID": 3,
+   "strandOnArduino":5,
+    "ring": [3],
+    "group": [2],
+    "left": [156],
+    "right": [157],
+    "x":9.85 ,
+    "z":3.25,
+    "y":[6,16]
+  },
+"157": {
+   "status":"active",
+   "arduinoID": 6,
+   "strandOnArduino":10,
+    "ring": [3],
+    "group": [2],
+    "left": [156],
+    "right": [140],
+    "x":10.2 ,
+    "z":2.65,
+    "y":[5,14]
   }
 }

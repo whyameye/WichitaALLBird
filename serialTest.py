@@ -1,6 +1,6 @@
 import serial, time, sys, select, serial.tools.list_ports, binascii, os
 from itertools import chain
-BAUDRATE = 2000000 # 115200
+BAUDRATE = 115200
 
 # ser = serial.Serial('/dev/cu.wchusbserial14120', 115200)
 # ser = serial.Serial('/dev/ttyUSB1', 115200)

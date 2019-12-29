@@ -14,7 +14,8 @@ LOG_LEVEL = Log.INFO
 
 def log(level, msg):
     if level.value >= LOG_LEVEL.value:
-        print("%d %s: %s" %(int(round(time.time())), level, msg))
+        theTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+        print("%s %s: %s" %(theTime, level, msg), flush=True)
 
 def getInput():
     line = ""

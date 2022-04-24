@@ -1,5 +1,5 @@
 from enum import Enum
-import time, sys, select, env
+import time, sys, select
 
 DRY_RUN=True
 MODE_FROM_KEYBOARD=True

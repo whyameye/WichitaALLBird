@@ -1,6 +1,7 @@
 import serial, time, sys, select, serial.tools.list_ports, binascii, os
 from itertools import chain
-BAUDRATE = 115200
+import random
+BAUDRATE = 921600
 
 # ser = serial.Serial('/dev/cu.wchusbserial14120', 115200)
 # ser = serial.Serial('/dev/ttyUSB1', 115200)
@@ -26,6 +27,12 @@ def openPort():
     port = choosePort();
     resetArduino("/dev/ttyUSB"+port)
     ser = serial.Serial('/dev/ttyUSB'+port, BAUDRATE)
+    ser.dtr = False
+    ser.rts = False
+    time.sleep(.1)
+    while ser.in_waiting:  # Or: while ser.inWaiting():
+        ser.readline()
+    time.sleep(.1)
     print("ID : {} ".format(getID(ser)))
     time.sleep(1)
     return ser
@@ -40,14 +47,20 @@ def getInput(timeToWait):
         return True
     return False
     
-def setLED(ser, strand, numOnStrand, color, amplitude):
+def setLED(ser, numOnStrand, color, amplitude):
     bytes = []
-    bytes.append((strand << 3) + numOnStrand)
+    bytes.append(numOnStrand >> 8)
+    bytes.append(numOnStrand & 0xff)
     bytes.append(color)
     bytes.append(amplitude)
-    bytes.append(0xff)
+    bytes.append(0xFF)
     ser.write(serial.to_bytes(bytes))
-
+    ser.flush()
+    # time.sleep(.1)
+    # while ser.in_waiting:  # Or: while ser.inWaiting():
+    #    print(ser.readline())
+    
+              
 def test1(amp):
     """cycle all colors with constant amplitude
     Parameter:
@@ -92,27 +105,36 @@ def testStrand():
 
     while True:
         port = choosePort();
-        # ser = serial.Serial('/dev/ttyUSB'+port, 115200)
         ser = serial.Serial('/dev/ttyUSB'+port, BAUDRATE)
+        # ser = serial.Serial('/dev/ttyACM'+port, BAUDRATE)
+        ser.dtr = False
+        ser.rts = False
+        time.sleep(.1)
+        while ser.in_waiting:  # Or: while ser.inWaiting():
+            ser.read()
         arduinoID = getID(ser)
+        print("Port "+port+" corresponds to Arduino ID "+str(arduinoID))
+        print("Flashing Arduino ID "+str(arduinoID)+". <ENTER> to stop.")
         while True:
-            print("Port "+port+" corresponds to Arduino ID "+str(arduinoID))
-            strand = input("Strand ('<ENTER>' to reenter port): ")
-            if strand == "":
-                ser.close()
+            x = random.randrange(255);
+            for i in range(150):
+                # print("sending: %d, 150, 254" % (i))
+                setLED(ser, i, x, 150)
+                # time.sleep(.003)
+                #while ser.in_waiting:  # Or: while ser.inWaiting():
+                #    print(ser.readline())
+
+            # print()
+            time.sleep(0.25)
+            for i in range(150):
+                # print("sending: %d, 150, 0" % (i))
+                setLED(ser, i, 0,0)
+                # time.sleep(.003)
+                # while ser.in_waiting:  # Or: while ser.inWaiting():
+                #    ser.readline()
+
+            if getInput(0.25):
                 break
-            print("Flashing Arduino ID "+str(arduinoID)+" strand "+strand+". <ENTER> to stop.")
-            strand = int(strand)
-            while True:
-                for i in range(6):
-                    setLED(ser, strand, i, 150, 254)
-                    time.sleep(.001)
-                time.sleep(0.25)
-                for i in range(6):
-                    setLED(ser, strand,i, 150, 0)
-                    time.sleep(.001)
-                if getInput(0.25):
-                    break
 def testStrands(port, times):
     """flash all strands (0-17) white
     Parameters
@@ -133,32 +155,31 @@ def testStrands(port, times):
             for j in range(times):
                 for i in range(6):
                     setLED(ser, strand, i, 150, 254)
-                    time.sleep(.001)
+                    time.sleep(.1)
                 time.sleep(0.25)
                 for i in range(6):
                     setLED(ser, strand,i, 150, 0)
-                    time.sleep(.01)
+                    time.sleep(.1)
                 time.sleep(0.25)
         ser.close()
 
 
 def getID(ser):
+    return 8
     msg = ""
+    ans = 9
     print("trying to read ID")
     bytes = []
-    bytes.append(0xff)
-    bytes.append(0xff)
-    ser.write(serial.to_bytes(bytes))
-    time.sleep(.01)
-    msg = ser.read(ser.inWaiting())
-    try:
-        ans = msg[0]
-    except:
-        ans = 9
-        time.sleep(.5)
-    '''
-    bytes = []
-    bytes.append(0xff)
-    ser.write(serial.to_bytes(bytes))
-    '''
+    bytes.append(0xFF)
+    bytes.append(0xFF)
+    while ans > 8:
+        ser.write(serial.to_bytes(bytes))
+        ser.flush()
+        time.sleep(.1)
+        msg = ser.read(ser.inWaiting())
+        print(msg)
+        try:
+            ans = msg[0]
+        except:
+            ans = 9
     return ans

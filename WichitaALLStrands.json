@@ -1,17 +1,11 @@
 {
   "0": {
-    "status": "dark birds",
-    "arduinoID": 9,
-    "strandOnArduino":0,
-    "ring": [1, 2, 3],
-    "group": [1, 2],
-    "left": [65,95,16],
-    "right": [52,66,1],
-    "x":7.75,
-    "z":4,
-    "y":[3, 6, 10, 15, 18],
-    "server": 3,
-    "strandOnServer": 5
+    "arduinoID": 8,
+    "group": [8],
+    "left": [7],
+    "right": [],
+    "down": [1],
+    "up": []
   },
   "1": {
     "status": "active",

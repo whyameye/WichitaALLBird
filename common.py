@@ -1,7 +1,11 @@
 from enum import Enum
 import time, sys, select, env
 
+DRY_RUN=True
+MODE_FROM_KEYBOARD=True
+START_LEDS=[0,5,10,15,20]
 NUMBER_OF_SERVERS = 9
+NUMBER_OF_LEDS_PER_SERVER = 200
 
 class Log(Enum):
     VERY_VERBOSE = 1

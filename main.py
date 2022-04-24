@@ -3,12 +3,10 @@
 import json, time, random, sys
 from serialComm import *
 from common import *
-import redis
 
-CHANCE_OF_PICKING_CLOSEST_Y = 0.8
-TRIGGER_LENGTH = 5000 # milliseconds before returning to mode 0
 class Seq(object):
-    activeLeds = []
+    activeLeds = [] # active LEDS for all the sequences not just 1 sequence
+    activeSeqs = []
     
     def __init__(self, mode):
         self.mode = mode
@@ -18,87 +16,72 @@ class Seq(object):
         log(Log.VERBOSE, "total LEDs for new sequence: "+str(self.totalLeds))
         self.currentLedIndex = 0 # number of active LEDs in mode
         self.direction = "" #
+        self.deleteMe = False
         
     def remove(self):
         pass
 
+    def removeLedUsingActiveLed(self, activeLed, myMillis, firstLed):
+        firstEl = [z[0] for z in self.leds]
+        myIndex = firstEl.index(activeLed)
+        led = self.leds[myIndex]
+
+        if (not firstLed) or (abs(myMillis - self.leds[self.leds.index(led)][1]) > self.mode["overlapTime"]):
+            self.removeLed(self.leds.index(led))
+            numFalse = [x[0][2] for x in self.leds].count(False)
+            if numFalse == len(self.leds):
+                self.deleteMe = True
+            return True
+        else:
+            return False
+    
+    def removeLed(self, led):
+        self.activeLeds.remove(self.leds[led][0])
+        self.activeSeqs.remove([self, self.leds[led][0]])
+        self.leds[led][0][2] = False
+
+    def removeLedIfConflict(self, ledInQuestion, firstLed = False):
+        if ledInQuestion in self.activeLeds:
+            instanceToCall = self.activeSeqs[self.activeLeds.index(ledInQuestion)][0]
+            # if instanceToCall == self:
+            #    return True
+            if not instanceToCall.removeLedUsingActiveLed(ledInQuestion, millis(), firstLed):
+                self.deleteMe = True
+                # breakpoint()
+                return False
+        return True
+            
     def getStartLed(self):
         """get first LED in sequence
-        returns LED to light described as list: [strand, index of y element in strand]
+        returns LED to light described as list: [NUM_OF_SERVER, START_LED #]
         """
-
-        possibleStartRings = self.mode["moves"]["startRings"]
-        possibleStartGroups = self.mode["moves"]["startGroups"]
-        possibleStrandsInRings = []
-        for i in possibleStartRings:
-            possibleStrandsInRings += strandsInRing[i]
-        possibleStrandsInGroups = []
-        for i in possibleStartGroups:
-            possibleStrandsInGroups += strandsInGroup[i]
-        possibleStrands = list(set(possibleStrandsInRings) & set(possibleStrandsInGroups))
-        theChosenStrandIndex = random.randrange(0,len(possibleStrands))
-        theChosenStrand = possibleStrands[theChosenStrandIndex]
         lenStartMoves = len(self.mode["moves"]["startDirection"])
-        self.direction = self.mode["moves"]["startDirection"][random.randrange(0,lenStartMoves)]
-        LedIndexOnStrand = random.randrange(0,len(strands[theChosenStrand]["y"]))
-        return [theChosenStrand, LedIndexOnStrand, True]
-
-    def chooseLEDOnStrand(self, currentLED, currentStrand, strandToTry):
-        if (random.random() > CHANCE_OF_PICKING_CLOSEST_Y):
-            return [strandToTry, random.randrange(0,len(strands[strandToTry]["y"])), True]
-        log(Log.VERY_VERBOSE, "current Strand: "+str(currentStrand))
-        log(Log.VERY_VERBOSE, "current LED: "+str(currentLED))
-        log(Log.VERY_VERBOSE, "strand to Try: "+str(strandToTry))
-        CurrentLEDPos = strands[currentStrand]["y"][currentLED[0][1]]
-        PossibleLEDPoses = strands[strandToTry]["y"]
-        distances = [abs(i - CurrentLEDPos) for i in PossibleLEDPoses]
-        return [strandToTry, distances.index(min(distances)), True]
-
-    def getClosestYIndex(self, currentStrand, currentLEDIndex, nextStrand):
-        currentY = strands[currentStrand]["y"][currentLEDIndex]
-        deltaY = [abs(currentY - i) for i in strands[nextStrand]["y"]]
-        log(Log.VERY_VERBOSE, "deltaY Index: "+str(deltaY.index(min(deltaY))))
-        return deltaY.index(min(deltaY))
+        self.direction = self.mode["moves"]["startDirection"][random.randrange(0,lenStartMoves)]        
+        # startLed = [random.randrange(NUMBER_OF_SERVERS), START_LEDS[random.randrange(len(START_LEDS))], True]
+        startLed = [8, START_LEDS[random.randrange(len(START_LEDS))], True]
+        if self.removeLedIfConflict(startLed, True):
+            log(Log.VERY_VERBOSE, "startLed in very danger.")
+            # return False
+            return startLed # FIXME True means active?
+        return False
     
     def getViableMove(self):
         """get a viable move for an already chosen direction.
         returns 1st half of LED list (without millis())
         if no move is viable, return False
         """
-        currentLED = self.leds[-1] # get last LED list in list of LED lists 
-        currentStrand = currentLED[0][0]
-        currentLEDIndexOnStrand = currentLED[0][1]
-        if self.direction == "left" or self.direction == "right":
-            try:
-                possibleStrands = strands[currentStrand][self.direction].copy()
-            except KeyError:
-                return False
-            while len(possibleStrands) > 0:
-                i = random.randrange(0,len(possibleStrands))
-                strandToTry = possibleStrands.pop(i)
-                if self.testViableMove(currentStrand, strandToTry):
-                    return self.chooseLEDOnStrand(currentLED, currentStrand, strandToTry)
-            return False
-        if self.direction == "up" and currentLEDIndexOnStrand > 0:
-            return [currentStrand, currentLEDIndexOnStrand - 1, True]
-        if self.direction == "down" and currentLEDIndexOnStrand < (len(strands[currentStrand]["y"])-1):
-            return [currentStrand, currentLEDIndexOnStrand + 1, True]
-        for i in ["inner", "outer"]:
-            if self.direction == i and strands[currentStrand].get(i):
-                nextStrand = strands[currentStrand][i]
-                return [nextStrand,
-                        self.getClosestYIndex(currentStrand, currentLEDIndexOnStrand, nextStrand), True]
+        currentLED = self.leds[-1] # get last LED list in list of LED lists
+        currentServer = currentLED[0][0]
+        currentLedNum = currentLED[0][1]
+        if self.direction == "left" and currentServer > 0:
+            return [currentServer-1, currentLedNum, True]
+        if self.direction == "right" and currentServer < NUMBER_OF_SERVERS-1:
+            return [currentServer+1, currentLedNum, True]
+        if self.direction == "forward" and currentLedNum < NUMBER_OF_LEDS_PER_SERVER - 1:
+            return [currentServer, currentLedNum + 1, True]
+        if self.direction == "backward" and currentLedNum > 0:
+            return [currentServer, currentLedNum - 1, True]
         return False
-
-    def testViableMove(self,currentStrand, strandToTry):
-        if (self.mode["moves"]["moveOutsideGroup"].upper() == "N" and
-            strands[currentStrand]["group"] != strands[strandToTry]["group"]):
-            return False
-        if (self.mode["moves"]["moveOutsideRing"].upper() == "N" and
-            strands[currentStrand]["ring"] != strands[strandToTry]["ring"]):
-            return False
-        return True
-        
 
     def getAdditionalLed(self):
         """find an Led that meets the criteria
@@ -106,7 +89,7 @@ class Seq(object):
         returns LED to light described as list: [strand, index of y element in strand]
         returns False if no viable move is possible
         """
-        viableMove = self.getViableMove() if random.random() > self.mode["moves"]["changeMove"] else False
+        viableMove = self.getViableMove()
         if viableMove == False:
             movesAllowed = self.mode["moves"]["movesAllowed"].copy()
             numMovesAllowed = len(movesAllowed)
@@ -126,43 +109,55 @@ class Seq(object):
 
         if self.currentLedIndex == 0:
             currentLed = self.getStartLed() # list of 2 elements
+            if currentLed == False:
+                self.deleteMe = True
+                return False
             log(Log.VERBOSE, "added first led: "+str(currentLed))
             self.startTime = millis()
-            self.currentLedIndex = 1
             self.activeLeds.append(currentLed) # all Leds active in all sequences
-            log(Log.VERY_VERBOSE, "activeLEDs: "+str(self.activeLeds));
+            self.activeSeqs.append([self, currentLed])
             self.leds.append([currentLed, millis()]) # Leds active in this instance only
+            self.currentLedIndex = 1
+            log(Log.VERY_VERBOSE, "activeLEDs: "+str(self.activeLeds));
             return True
             
         deltaTime = millis() - self.startTime        
-        if ((deltaTime < (self.currentLedIndex * self.mode['timeToNextLed'])) or
-            (self.currentLedIndex >= self.totalLeds)):
-            return False
+        if deltaTime < (self.currentLedIndex * self.mode['timeToNextLed']):
+            return True
+        if self.currentLedIndex >= self.totalLeds:
+            return True
         
         log(Log.VERY_VERBOSE, "adding additional LED...")
         currentLed = self.getAdditionalLed()
-        if currentLed == False:
-            log(Log.VERY_VERBOSE, "No viable moves. Stunt")
-            self.totalLeds = self.currentLedIndex
-            return False
+        # if currentLed == False:
+            # log(Log.VERY_VERBOSE, "No viable moves. Stunt")
+            # self.totalLeds = self.currentLedIndex
+            # return False
         
         # log(Log.VERY_VERBOSE, "added additional led: "+str(currentLed))
-        if currentLed in self.activeLeds:
-            if self.currentLedIndex == 0:
-                log(Log.VERY_VERBOSE, "1st LED already in list. Kill the sequence")
-                return False
-            else:
-                log(Log.VERY_VERBOSE, "found LED already in another active sequence. Stunt")
-                self.totalLeds = self.currentLedIndex
-                return False
+        #if currentLed in self.activeLeds:
+            #firstEl = [z[0] for z in self.leds]
+            #self.activeLeds.remove(currentLed)
+            #self.leds.pop(firstEl.index(currentLed))
+        self.removeLedIfConflict(currentLed)
+        #if currentLed in self.activeLeds:
+        #    if self.currentLedIndex == 0:
+        #        log(Log.VERY_VERBOSE, "1st LED already in list. Kill the sequence")
+        #        return False
+        #    else:
+        #        log(Log.VERY_VERBOSE, "found LED already in another active sequence. Stunt")
+        #        self.removeLedUsingActiveLed(currentLed)
+        #        # self.totalLeds = self.currentLedIndex
+        #        return False
         self.activeLeds.append(currentLed) # all Leds active in all sequences
+        self.activeSeqs.append([self, currentLed])
         # log(Log.VERY_VERBOSE, "activeLEDs: "+str(self.activeLeds));
         self.leds.append([currentLed, millis()]) # Leds active in this instance only
         self.currentLedIndex += 1
 
     def updateLed(self,led):
         """Update color of Led based on time
-        led passed in is of form [[strand, # on strand, T/F active],time]
+        led passed in is of form [[serverNum, ledNum, T/F active],time]
         returns False only if led state is changing from active to inactive
         """
         if led[0][2] == False: # inactive LED
@@ -181,13 +176,11 @@ class Seq(object):
                     colorAndAmp[k]=int(round(ddTime*(diffColorOrAmp/tTime)+ledPatterns[j-1][k]))
                 inPattern = True
                 break;
-        strand = strands[led[0][0]]
-        serverToAssign = strand["arduinoID"]
-        strandOnServer = strand["strandOnArduino"]
-        numOnStrand = led[0][1]
+        serverNum = led[0][0]
+        ledNum = led[0][1]
         color = colorAndAmp[0]
         amp = colorAndAmp[1]
-        addToServerLedLists(serverToAssign, strandOnServer, numOnStrand, color, amp)
+        addToServerLedLists(serverNum, ledNum, color, amp)
         led[0][2] = inPattern
         return inPattern
 
@@ -195,11 +188,17 @@ class Seq(object):
         """continually call this high-level update method.
         returns False if all Leds have gone through all states
         """
-        self.addLed(self.leds)
+        if self.deleteMe:
+            self.deleteMe = False
+            return False
+        if self.addLed(self.leds) == False:
+            return False
         for i in range(len(self.leds)):
             if (not self.updateLed(self.leds[i])):
                 log(Log.VERBOSE, "removing led: "+str(self.leds[i]))
-                self.activeLeds.remove(self.leds[i][0])
+                # self.activeLeds.remove(self.leds[i][0])
+                # self.activeSeqs.remove([self, self.leds[i][0]])
+                self.removeLed(i)
                 log(Log.VERY_VERBOSE, "active LEDs left:"+str(self.activeLeds));
                 log(Log.VERY_VERBOSE, "sequence LEDs left:"+str(self.leds));
 
@@ -209,11 +208,6 @@ class Seq(object):
                     return False
         return True
 
-
-def saveBirds(birds):
-    f = open("birds.json","w")
-    f.write(json.dumps(birds, indent=4))
-    f.close()
     
 def loadJSON(filename):
     f = open(filename,"r")
@@ -224,57 +218,16 @@ def loadJSON(filename):
 def millis():
     return int(round(time.time() * 1000))
 
-def addInniesAndOuties():
-    """adds closest inner and outer to json"""
-    for outerRing in range(1,3):
-        for strandInOuterRing in strandsInRing[outerRing]:
-            # print("outer: "+str(strandInOuterRing))
-            distances = []
-            for strandInInnerRing in strandsInRing[outerRing+1]:
-                # print("inner: "+str(strandInInnerRing))
-                if strandInInnerRing != strandInOuterRing:
-                    deltaX = (strands[strandInOuterRing]["x"] -
-                              strands[strandInInnerRing]["x"])
-                    deltaZ = (strands[strandInOuterRing]["z"] -
-                              strands[strandInInnerRing]["z"])
-                    distances.append(deltaX**2 + deltaZ**2)
-                else:
-                    distances.append(sys.maxsize) # add it for indexing but make it unpickable
-                    # print("EQUAL")
-
-
-            closestInner = strandsInRing[outerRing+1][distances.index(min(distances))]
-            # print("outer: "+str(strandInOuterRing))
-            # print("inner: "+str(closestInner))
-            strands[strandInOuterRing]["inner"]=closestInner
-            strands[closestInner]["outer"]=strandInOuterRing
-
-
 def loadGlobalVariables():
     """create list of integers representing strand #s depending on what ring and group they are in
     """
-    global strandsInRing, strandsInGroup, modes, strands
+    global modes
 
     jsonModes = loadJSON("WichitaALLModes.json")
-    jsonStrands = loadJSON("WichitaALLStrands.json")
 
     # indexes that are numeric strings are annoying, so we convert:
     for i in jsonModes:
         modes[int(i)] = jsonModes[i]
-    for i in jsonStrands:
-        strands[int(i)] = jsonStrands[i]
-
-    # make a list of which strands are in which rings and groups:
-    for i in range(4):
-        strandsInRing.append([])
-        strandsInGroup.append([])
-    for i in strands:
-        for j in range(1,4):
-            if j in strands[i]["ring"]:
-                strandsInRing[j].append(i)
-            if j in strands[i]["group"]:
-                strandsInGroup[j].append(i)
-
 
 def generateSequences(mode, newTrig):
     numOfSeqs = random.randrange(mode['minInstances'],mode['maxInstances']+1)
@@ -284,53 +237,34 @@ def generateSequences(mode, newTrig):
         allTheSeqs.append(Seq(mode))
 
 def updateMode(modeIndex, trigTime):
-    if env.MODE_FROM_KEYBOARD:
+    if MODE_FROM_KEYBOARD:
         newIndex = getInput()
         if newIndex:
             trigTime = millis()
             return [int(newIndex[0]), trigTime]
         return [modeIndex, trigTime]
-    
-    for i in range(1,8):
-        strFromSensor = r.get("from/"+str(i))
-        if strFromSensor != None:
-            try:
-                activity = json.loads(strFromSensor)["activity"]
-                if activity == True:
-                    trigTime = millis()
-                    return [i, trigTime]
-            except:
-                pass
-    return [modeIndex, trigTime]
-    
+        
 # Main program logic:
 if __name__ == '__main__':
 
     # setup
     allTheSeqs = []
     modes = {}
-    strands = {}
-    strandsInRing = []
-    strandsInGroup = []
     lastModeIndex = 99 # trigger generation since lastMode != mode
     modeIndex = 0
     loadGlobalVariables()
-    addInniesAndOuties()
 
     begin() # initialize serial communication
     trigTime = millis()
-    r = redis.StrictRedis(host='localhost', port=6379, db=0,
-                          password=env.redisPassword,
-                          charset="utf-8",decode_responses=True)
-    # loop
     while True:
-        modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
+        # modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
         modeIndex, trigTime = updateMode(modeIndex, trigTime)
         if lastModeIndex != modeIndex: # new mode triggered
             log(Log.INFO, "NEW MODE: %d" %(modeIndex))
             generateSequences(modes[modeIndex], True)
             lastModeIndex = modeIndex
         initializeServerLedLists()
+        log(Log.VERY_VERBOSE, "# of seqs: " + str(len(allTheSeqs)))
         for sequence in allTheSeqs: # allTheSeqs is a list of classes we will now traverse
             if not sequence.update(): # if sequence should die
                 log(Log.VERBOSE, "removing sequence")

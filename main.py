@@ -56,13 +56,16 @@ class Seq(object):
         returns LED to light described as list: [NUM_OF_SERVER, START_LED #]
         """
         lenStartMoves = len(self.mode["moves"]["startDirection"])
-        self.direction = self.mode["moves"]["startDirection"][random.randrange(0,lenStartMoves)]        
-        # startLed = [random.randrange(NUMBER_OF_SERVERS), START_LEDS[random.randrange(len(START_LEDS))], True]
-        startLed = [8, START_LEDS[random.randrange(len(START_LEDS))], True]
+        self.direction = self.mode["moves"]["startDirection"][random.randrange(0,lenStartMoves)]
+        startLedList = self.mode['startLeds']
+        startLed = startLedList[random.randrange(len(startLedList))]
+        if DRY_RUN:
+            startServer = DRY_RUN_SERVER
+        else:
+            startSever = random.randrange(NUMBER_OF_SERVERS)
+        startLed = [startServer, startLed, True]
         if self.removeLedIfConflict(startLed, True):
-            log(Log.VERY_VERBOSE, "startLed in very danger.")
-            # return False
-            return startLed # FIXME True means active?
+            return startLed
         return False
     
     def getViableMove(self):

@@ -10,6 +10,7 @@
     },
     "timeToNextLed":5,
     "overlapTime": 400,
+    "startLeds": [0,5,10,15,20],
     "ledPattern":
     [[0,0,0],
      [0,127, 200],
@@ -20,6 +21,7 @@
     "minLength":10,
     "maxLength":20,
     "overlapTime": 4000,
+    "startLeds": [0,5,10,15,20],
     "moves":{
       "startDirection": ["forward"],
       "movesAllowed": ["forward", "backward"]

@@ -117,7 +117,7 @@ def testStrand():
         print("Flashing Arduino ID "+str(arduinoID)+". <ENTER> to stop.")
         while True:
             x = random.randrange(255);
-            for i in range(150):
+            for i in range(190):
                 # print("sending: %d, 150, 254" % (i))
                 setLED(ser, i, x, 150)
                 # time.sleep(.003)
@@ -126,7 +126,7 @@ def testStrand():
 
             # print()
             time.sleep(0.25)
-            for i in range(150):
+            for i in range(190):
                 # print("sending: %d, 150, 0" % (i))
                 setLED(ser, i, 0,0)
                 # time.sleep(.003)
@@ -165,7 +165,6 @@ def testStrands(port, times):
 
 
 def getID(ser):
-    return 8
     msg = ""
     ans = 9
     print("trying to read ID")
@@ -177,7 +176,6 @@ def getID(ser):
         ser.flush()
         time.sleep(.1)
         msg = ser.read(ser.inWaiting())
-        print(msg)
         try:
             ans = msg[0]
         except:

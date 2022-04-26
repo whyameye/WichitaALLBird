@@ -62,7 +62,7 @@ class Seq(object):
         if DRY_RUN:
             startServer = DRY_RUN_SERVER
         else:
-            startSever = random.randrange(NUMBER_OF_SERVERS)
+            startServer = random.randrange(NUMBER_OF_SERVERS)
         startLed = [startServer, startLed, True]
         if self.removeLedIfConflict(startLed, True):
             return startLed
@@ -276,6 +276,6 @@ if __name__ == '__main__':
                 del sequence # delete class in environment
                 generateSequences(modes[modeIndex], False)
         sendToServers()
-        time.sleep(.01)
+        # time.sleep(.01)
         # strip.show()
 

@@ -1,9 +1,9 @@
 from enum import Enum
 import time, sys, select
 
-DRY_RUN=True
+DRY_RUN=False
 MODE_FROM_KEYBOARD=True
-DRY_RUN_SERVER = 4
+DRY_RUN_SERVER = 0
 NUMBER_OF_SERVERS = 9
 NUMBER_OF_LEDS_PER_SERVER = 200
 

@@ -1,32 +1,32 @@
 {
   "0":{
-    "minInstances":10,
-    "maxInstances":10,
-    "minLength":150,
-    "maxLength":150,
+    "minInstances":40,
+    "maxInstances":40,
+    "minLength":300,
+    "maxLength":300,
     "moves":{
       "startDirection": ["forward"],
       "movesAllowed": ["forward", "backward"]
     },
-    "timeToNextLed":5,
-    "overlapTime": 400,
-    "startLeds": [0,5,10,15,20],
+    "timeToNextLed":1,
+    "overlapTime": 4000,
+    "startLeds": [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
     "ledPattern":
     [[0,0,0],
      [0,127, 200],
      [0,0,400]]},
   "1":{
-    "minInstances":6,
-    "maxInstances":12,
-    "minLength":10,
-    "maxLength":20,
+    "minInstances":40,
+    "maxInstances":80,
+    "minLength":100,
+    "maxLength":200,
     "overlapTime": 4000,
-    "startLeds": [0,5,10,15,20],
+    "startLeds": [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100],
     "moves":{
       "startDirection": ["forward"],
       "movesAllowed": ["forward", "backward"]
     },
-    "timeToNextLed":100,
+    "timeToNextLed":10,
     "ledPattern":
     [[0,0,0],
      [255,127, 2000],

@@ -8,7 +8,7 @@ class Seq(object):
     activeLeds = [] # active LEDS for all the sequences not just 1 sequence
     activeSeqs = []
     
-    def __init__(self, mode):
+    def __init__(self, mode, seqNum):
         self.mode = mode
         self.leds = [] # list of LEDs we're currently controlling
         self.totalLeds = random.randrange(self.mode['minLength'],
@@ -17,6 +17,7 @@ class Seq(object):
         self.currentLedIndex = 0 # number of active LEDs in mode
         self.direction = "" #
         self.deleteMe = False
+        self.seqNum = seqNum
         
     def remove(self):
         pass
@@ -39,7 +40,7 @@ class Seq(object):
         self.activeLeds.remove(self.leds[led][0])
         self.activeSeqs.remove([self, self.leds[led][0]])
         self.leds[led][0][2] = False
-
+    
     def removeLedIfConflict(self, ledInQuestion, firstLed = False):
         if ledInQuestion in self.activeLeds:
             instanceToCall = self.activeSeqs[self.activeLeds.index(ledInQuestion)][0]
@@ -63,10 +64,12 @@ class Seq(object):
             startServer = DRY_RUN_SERVER
         else:
             startServer = random.randrange(NUMBER_OF_SERVERS)
+        startServer = 0 # 426
         startLed = [startServer, startLed, True]
-        if self.removeLedIfConflict(startLed, True):
-            return startLed
-        return False
+        # if self.removeLedIfConflict(startLed, True):
+        #     return startLed
+        # return False
+        return startLed # 425
     
     def getViableMove(self):
         """get a viable move for an already chosen direction.
@@ -116,7 +119,7 @@ class Seq(object):
                 self.deleteMe = True
                 return False
             log(Log.VERBOSE, "added first led: "+str(currentLed))
-            self.startTime = millis()
+            self.startTime = millis() + self.mode["overlapTime"] * self.seqNum
             self.activeLeds.append(currentLed) # all Leds active in all sequences
             self.activeSeqs.append([self, currentLed])
             self.leds.append([currentLed, millis()]) # Leds active in this instance only
@@ -237,7 +240,7 @@ def generateSequences(mode, newTrig):
     while (len(allTheSeqs) < numOfSeqs) or (newTrig == True):
         newTrig = False
         log(Log.VERBOSE, "generating parameters for seq #"+str(len(allTheSeqs)+1))
-        allTheSeqs.append(Seq(mode))
+        allTheSeqs.append(Seq(mode, len(allTheSeqs)))
 
 def updateMode(modeIndex, trigTime):
     if MODE_FROM_KEYBOARD:
@@ -249,17 +252,19 @@ def updateMode(modeIndex, trigTime):
         
 # Main program logic:
 if __name__ == '__main__':
-
+    startTime = time.time()
+    modeToChoose = int(sys.argv[1])
+    print("mode chosen: "+str(modeToChoose))
     # setup
     allTheSeqs = []
     modes = {}
     lastModeIndex = 99 # trigger generation since lastMode != mode
-    modeIndex = 0
+    modeIndex = modeToChoose
     loadGlobalVariables()
 
     begin() # initialize serial communication
     trigTime = millis()
-    while True:
+    while (time.time() - startTime) < 60:
         # modeIndex = 0 if ((millis() - trigTime) > TRIGGER_LENGTH) else modeIndex
         modeIndex, trigTime = updateMode(modeIndex, trigTime)
         if lastModeIndex != modeIndex: # new mode triggered
@@ -267,7 +272,7 @@ if __name__ == '__main__':
             generateSequences(modes[modeIndex], True)
             lastModeIndex = modeIndex
         initializeServerLedLists()
-        log(Log.VERY_VERBOSE, "# of seqs: " + str(len(allTheSeqs)))
+        log(Log.VERBOSE, "# of seqs: " + str(len(allTheSeqs)))
         for sequence in allTheSeqs: # allTheSeqs is a list of classes we will now traverse
             if not sequence.update(): # if sequence should die
                 log(Log.VERBOSE, "removing sequence")

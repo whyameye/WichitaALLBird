@@ -62,8 +62,9 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
         numOfServers = 1
 
     for i in range(numOfServers):
-        resetArduino("/dev/ttyUSB"+str(i))
-    time.sleep(2.25) # servers are in program mode for 2 seconds after reset
+        pass
+        # resetArduino("/dev/ttyUSB"+str(i))
+    # time.sleep(2.25) # servers are in program mode for 2 seconds after reset
 
     try:
         with open('/tmp/portToID.json', 'r') as json_file:
@@ -96,7 +97,7 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
         serverID = portToID[i]
         log(Log.INFO, "ID: %d Serial /dev/ttyUSB%d" %(serverID, i))
         serverIdToPortList[serverID] = ser
-        
+    time.sleep(.1)
     
 def setLED(ser, ledNum, color, amplitude):
     bytes = []
@@ -113,6 +114,7 @@ def setLED(ser, ledNum, color, amplitude):
 
 def sendToServer(serverID):
     port = serverIdToPortList[serverID]
+    serverID = 0 # 426
     # import pdb; pdb.set_trace()
     if serverLedLists[serverID] == []:
         serverLedLists[serverID].append([31, 0, 0]) # 31 is a nonexistent strand on all servers FIXME

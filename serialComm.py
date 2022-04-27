@@ -97,7 +97,7 @@ def begin(numOfServers = NUMBER_OF_SERVERS):
         serverID = portToID[i]
         log(Log.INFO, "ID: %d Serial /dev/ttyUSB%d" %(serverID, i))
         serverIdToPortList[serverID] = ser
-    time.sleep(.1)
+    time.sleep(.2)
     
 def setLED(ser, ledNum, color, amplitude):
     bytes = []
